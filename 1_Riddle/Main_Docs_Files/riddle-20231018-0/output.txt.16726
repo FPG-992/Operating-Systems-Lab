@@ -1,6 +1,0 @@
-set_robust_list(0x7f7eca165a20, 24)     = 0
-alarm(2)                                = 0
-read(33, 0x7ffd83549254, 4)             = -1 EBADF (Bad file descriptor)
-alarm(0)                                = 2
-exit_group(1)                           = ?
-+++ exited with 1 +++
