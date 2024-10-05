@@ -1,0 +1,115 @@
+
+8639  write(2, "\nChallenge   6: 'ping pong'\n", 28) = 28
+8639  openat(AT_FDCWD, "/proc/self/loginuid", O_RDONLY) = 6
+8639  read(6, "4294967295", 12)         = 10
+8639  close(6)                          = 0
+8639  ioctl(0, TCGETS, {c_iflag=BRKINT|ICRNL|IXON|IXANY|IMAXBEL|IUTF8, c_oflag=NL0|CR0|TAB0|BS0|VT0|FF0|OPOST|ONLCR, c_cflag=B38400|CS8|CREAD|HUPCL, c_lflag=ISIG|ICANON|ECHO|ECHOE|ECHOK|IEXTEN|ECHOCTL|ECHOKE, ...}) = 0
+8639  fstat(0, {st_mode=S_IFCHR|0620, st_rdev=makedev(0x88, 0x5), ...}) = 0
+8639  readlink("/proc/self/fd/0", "/dev/pts/5", 511) = 10
+8639  newfstatat(AT_FDCWD, "/dev/pts/5", {st_mode=S_IFCHR|0620, st_rdev=makedev(0x88, 0x5), ...}, 0) = 0
+8639  access("/var/run/utmpx", F_OK)    = -1 ENOENT (No such file or directory)
+8639  openat(AT_FDCWD, "/var/run/utmp", O_RDONLY|O_CLOEXEC) = 6
+8639  lseek(6, 0, SEEK_SET)             = 0
+8639  alarm(0)                          = 0
+8639  rt_sigaction(SIGALRM, {sa_handler=0x7f365f2398b0, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x7f365f0fd320}, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x7f365f0fd320}, 8) = 0
+8639  alarm(10)                         = 0
+8639  fcntl(6, F_SETLKW, {l_type=F_RDLCK, l_whence=SEEK_SET, l_start=0, l_len=0}) = 0
+8639  alarm(0)                          = 10
+8639  rt_sigaction(SIGALRM, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x7f365f0fd320}, NULL, 8) = 0
+8639  pread64(6, "\2\0\0\0\0\0\0\0~\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"..., 384, 0) = 384
+8639  pread64(6, "\1\0\0\0005\0\0\0~\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"..., 384, 384) = 384
+8639  pread64(6, "\6\0\0\0\305\0\0\0tty1\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"..., 384, 768) = 384
+8639  pread64(6, "\6\0\0\0\267\0\0\0console\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"..., 384, 1152) = 384
+8639  pread64(6, "\7\0\0\0\270\1\0\0pts/1\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"..., 384, 1536) = 384
+8639  pread64(6, "\10\0\0\0002\10\0\0pts/6\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"..., 384, 1920) = 384
+8639  pread64(6, "", 384, 2304)         = 0
+8639  fcntl(6, F_SETLKW, {l_type=F_UNLCK, l_whence=SEEK_SET, l_start=0, l_len=0}) = 0
+8639  close(6)                          = 0
+8639  write(2, "Hint:          'help us play!'.\n", 32) = 32
+8639  clone(child_stack=NULL, flags=CLONE_CHILD_CLEARTID|CLONE_CHILD_SETTID|SIGCHLD, child_tidptr=0x7f365f0b5a10) = 8640
+8639  clone(child_stack=NULL, flags=CLONE_CHILD_CLEARTID|CLONE_CHILD_SETTID|SIGCHLD <unfinished ...>
+8640  set_robust_list(0x7f365f0b5a20, 24) = 0
+8640  getpid( <unfinished ...>
+8639  <... clone resumed>, child_tidptr=0x7f365f0b5a10) = 8641
+8641  set_robust_list(0x7f365f0b5a20, 24 <unfinished ...>
+8639  wait4(-1,  <unfinished ...>
+8640  <... getpid resumed>)             = 8640
+8641  <... set_robust_list resumed>)    = 0
+8641  alarm(2 <unfinished ...>
+8640  fstat(1,  <unfinished ...>
+8641  <... alarm resumed>)              = 0
+8640  <... fstat resumed>{st_mode=S_IFCHR|0620, st_rdev=makedev(0x88, 0x5), ...}) = 0
+8641  read(33,  <unfinished ...>
+8640  getrandom("\x17\x11\x77\x17\x3e\xc9\xa8\xde", 8, GRND_NONBLOCK) = 8
+8640  brk(NULL)                         = 0x55deaf612000
+8640  brk(0x55deaf633000)               = 0x55deaf633000
+8640  write(1, "[8640] PING!\n", 13)    = 13
+8640  write(34, "\0\0\0\0", 4 <unfinished ...>
+8641  <... read resumed>"\0\0\0\0", 4)  = 4
+8640  <... write resumed>)              = 4
+8641  alarm(0 <unfinished ...>
+8640  alarm(2 <unfinished ...>
+8641  <... alarm resumed>)              = 2
+8640  <... alarm resumed>)              = 0
+8641  getpid( <unfinished ...>
+8640  read(53,  <unfinished ...>
+8641  <... getpid resumed>)             = 8641
+8640  <... read resumed>0x7ffe73c433b4, 4) = -1 EBADF (Bad file descriptor)
+8641  fstat(1,  <unfinished ...>
+8640  alarm(0 <unfinished ...>
+8641  <... fstat resumed>{st_mode=S_IFCHR|0620, st_rdev=makedev(0x88, 0x5), ...}) = 0
+8640  <... alarm resumed>)              = 2
+8641  getrandom("\x14\x4f\x58\x10\x81\xd2\x50\x2c", 8, GRND_NONBLOCK) = 8
+8640  exit_group(1 <unfinished ...>
+8641  brk(NULL <unfinished ...>
+8640  <... exit_group resumed>)         = ?
+8641  <... brk resumed>)                = 0x55deaf612000
+8641  brk(0x55deaf633000 <unfinished ...>
+8640  +++ exited with 1 +++
+8641  <... brk resumed>)                = 0x55deaf633000
+8639  <... wait4 resumed>[{WIFEXITED(s) && WEXITSTATUS(s) == 1}], 0, NULL) = 8640
+8641  write(1, "[8641] PONG!\n", 13 <unfinished ...>
+8639  --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=8640, si_uid=1000, si_status=1, si_utime=0, si_stime=0} ---
+8639  wait4(-1,  <unfinished ...>
+8641  <... write resumed>)              = 13
+8641  getpid()                          = 8641
+8641  write(1, "[8641] PING!\n", 13)    = 13
+8641  write(54, "\1\0\0\0", 4)          = -1 EBADF (Bad file descriptor)
+8641  exit_group(1)                     = ?
+8641  +++ exited with 1 +++
+8639  <... wait4 resumed>[{WIFEXITED(s) && WEXITSTATUS(s) == 1}], 0, NULL) = 8641
+8639  --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=8641, si_uid=1000, si_status=1, si_utime=0, si_stime=0} ---
+8639  write(2, "\33[31mFAIL\33[0m\n", 14) = 14
+8639  write(2, "\nChallenge   7: 'What's in a nam"..., 36) = 36
+8639  openat(AT_FDCWD, "/proc/self/loginuid", O_RDONLY) = 6
+8639  read(6, "4294967295", 12)         = 10
+8639  close(6)                          = 0
+8639  ioctl(0, TCGETS, {c_iflag=BRKINT|ICRNL|IXON|IXANY|IMAXBEL|IUTF8, c_oflag=NL0|CR0|TAB0|BS0|VT0|FF0|OPOST|ONLCR, c_cflag=B38400|CS8|CREAD|HUPCL, c_lflag=ISIG|ICANON|ECHO|ECHOE|ECHOK|IEXTEN|ECHOCTL|ECHOKE, ...}) = 0
+8639  fstat(0, {st_mode=S_IFCHR|0620, st_rdev=makedev(0x88, 0x5), ...}) = 0
+8639  readlink("/proc/self/fd/0", "/dev/pts/5", 511) = 10
+8639  newfstatat(AT_FDCWD, "/dev/pts/5", {st_mode=S_IFCHR|0620, st_rdev=makedev(0x88, 0x5), ...}, 0) = 0
+8639  access("/var/run/utmpx", F_OK)    = -1 ENOENT (No such file or directory)
+8639  openat(AT_FDCWD, "/var/run/utmp", O_RDONLY|O_CLOEXEC) = 6
+8639  lseek(6, 0, SEEK_SET)             = 0
+8639  alarm(0)                          = 0
+8639  rt_sigaction(SIGALRM, {sa_handler=0x7f365f2398b0, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x7f365f0fd320}, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x7f365f0fd320}, 8) = 0
+8639  alarm(10)                         = 0
+8639  fcntl(6, F_SETLKW, {l_type=F_RDLCK, l_whence=SEEK_SET, l_start=0, l_len=0}) = 0
+8639  alarm(0)                          = 10
+8639  rt_sigaction(SIGALRM, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x7f365f0fd320}, NULL, 8) = 0
+8639  pread64(6, "\2\0\0\0\0\0\0\0~\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"..., 384, 0) = 384
+8639  pread64(6, "\1\0\0\0005\0\0\0~\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"..., 384, 384) = 384
+8639  pread64(6, "\6\0\0\0\305\0\0\0tty1\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"..., 384, 768) = 384
+8639  pread64(6, "\6\0\0\0\267\0\0\0console\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"..., 384, 1152) = 384
+8639  pread64(6, "\7\0\0\0\270\1\0\0pts/1\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"..., 384, 1536) = 384
+8639  pread64(6, "\10\0\0\0002\10\0\0pts/6\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"..., 384, 1920) = 384
+8639  pread64(6, "", 384, 2304)         = 0
+8639  fcntl(6, F_SETLKW, {l_type=F_UNLCK, l_whence=SEEK_SET, l_start=0, l_len=0}) = 0
+8639  close(6)                          = 0
+8639  write(2, "Hint:          'A rose, by any o"..., 47) = 47
+8639  lstat(".hello_there", {st_mode=S_IFREG|0444, st_size=0, ...}) = 0
+8639  lstat(".hey_there", 0x7ffe73c43370) = -1 ENOENT (No such file or directory)
+8639  write(2, "\33[31mFAIL\33[0m\n", 14) = 14
+8639  write(2, "\nNext challenge locked. Complete"..., 50) = 50
+8639  exit_group(1)                     = ?
+8639  +++ exited with 1 +++
