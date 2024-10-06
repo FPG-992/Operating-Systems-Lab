@@ -1,0 +1,7 @@
+
+write(2, "Hint:          'Are you 32767? I"..., 54) = 54
+getpid()                                = 5074
+write(2, "\33[31mI don't like my PID, get me"..., 55) = 55
+write(2, "\nNext challenge locked. Complete"..., 50) = 50
+exit_group(1)                           = ?
++++ exited with 1 +++
