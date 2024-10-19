@@ -59,6 +59,8 @@ Hint:          'Processes run system calls'.
 SUCCESS
 ```
 
+---
+
 ## Challenge 1
 
 Running the ./riddle executable we got:
@@ -83,6 +85,8 @@ Challenge   1: 'Gatekeeper'
 Hint:          'Stand guard, let noone pass'.
 SUCCESS
 ```
+
+---
 
 ## Challenge 2
 
@@ -127,6 +131,8 @@ Hint:          'Stuck in the dark, help me move on'.
 SUCCESS
 ```
 
+---
+
 ## Challenge 3
 
 Running the ./riddle executable we got:
@@ -157,6 +163,8 @@ Challenge   3: 'what is the answer to life the universe and everything?'
 Hint:          'ltrace'.
 SUCCESS
 ```
+
+---
 
 ## Challenge 4
 
@@ -199,6 +207,8 @@ Hint:          'Mirror, mirror on the wall, who in this land is fairest of all?'
 SUCCESS
 ```
 
+---
+
 ## Challenge 5
 
 Running the ./riddle executable we got:
@@ -236,6 +246,8 @@ Challenge   5: 'my favourite fd is 99'
 Hint:          'when I bang my head against the wall it goes: dup! dup! dup!'.
 SUCCESS
 ```
+
+---
 
 ## Challenge 6
 
@@ -342,7 +354,7 @@ Hint:          'help us play!'.
 [53868] PONG!
 SUCCESS
 ```
-
+---
 
 ## Challenge 7
 
@@ -397,6 +409,8 @@ Challenge   7: 'What's in a name?'
 Hint:          'A rose, by any other name...'.
 ...would smell as sweet. SUCCESS
 ```
+
+---
 
 ## Challenge 8
 
@@ -509,6 +523,8 @@ Hint:          'Checking footers'.
 ..........SUCCESS
 ```
 
+---
+
 ## Challenge 9
 
 Running the ./riddle executable we got:
@@ -547,6 +563,8 @@ Hint:          'Let me whisper in your ear'.
 I am trying to contact you...\nSUCCESS
 ```
 
+---
+
 ## Challenge 10
 
 Running the ./riddle executable we after we typed 42, we saw:
@@ -584,6 +602,8 @@ Hint:          'Can you read my mind?'.
 What hex number am I thinking of right now? 9C665B03
 SUCCESS
 ```
+
+---
 
 ## Challenge 11
 
@@ -655,6 +675,8 @@ Hint:          'Can you read my mind?'.
 What hex number am I thinking of right now? $ D1AD7A0C
 SUCCESS
 ```
+
+---
 
 ## Challenge 12
 
@@ -743,6 +765,8 @@ b'K'
 SUCCESS
 ```
 
+---
+
 ## Challenge 13
 
 Running the ./riddle executable we saw:
@@ -788,6 +812,8 @@ Hint:          'Memquake! Don't lose the pages beneath your something something'
 p
 SUCCESS
 ```
+
+---
 
 ## Challenge 14
 
