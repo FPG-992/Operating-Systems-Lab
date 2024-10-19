@@ -19,6 +19,8 @@ So we used chmod to add execute permissions (we added all permissions to everyon
 chmod 777 riddle
 ```
 
+---
+
 ## Challenge 0
 Running the ./riddle executable we got:
 ```bash
