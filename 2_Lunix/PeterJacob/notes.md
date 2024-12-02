@@ -1,7 +1,7 @@
 ### Running a file (on kernel mode)
 ```bash
 > make
-    (it should product a somename.ko file)
+    (it should produce a somename.ko file)
 > insmod somename.ko
     (inserts the module into the kernel)
 > lsmod | grep somename
