@@ -2,7 +2,7 @@ Prompt:
 
 That's my final assignment for the class Operating System Lab. I am super confused and it's way difficult for me. Tell me how should I start and all the steps I should take in order to complete it.
 
-The assignment: <Instructions Text>
+The assignment: 'Instructions.md text'
 
 ---
 
