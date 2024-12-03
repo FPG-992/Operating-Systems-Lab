@@ -13,6 +13,7 @@
 ### Running the Project
 ```bash
 Terminal 1:
+> make
 > ./start.sh
     (change the port /dev/ttyS1 if needed)
 
