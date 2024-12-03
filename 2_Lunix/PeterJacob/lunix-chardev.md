@@ -1,11 +1,3 @@
-Prompt:
-
-Explain me what this code does. Tell me precisely what each function does and when it is being called: `code from lunix-chardev.c file`.
-
----
-
-Response:
-
 This code is a Linux kernel module that implements character devices for a system called **Lunix:TNG**. A **character device** is a type of device file in Unix-like operating systems that provides serial access to hardware devices like sensors. This driver allows user-space programs to read data from sensors connected to the system by reading from special files in the `/dev` directory.
 
 ### Global Data
