@@ -395,22 +395,122 @@ le be decimal
 0a 32 00 00  = 0x0000320a = free inodes: 12810 (decimal)
 
 13. Τι είναι το superblock στο σύστημα αρχείων ext2;
-
+Το superblock περιέχει όλες τις πληροφορίες σχετικά με το configuration του συστήματος αρχείων όπως:
+total number of inodes και blocks στο filesystem, πόσα είναι διαθέσιμα, πόσα inodes και blocks έχει το κάθε group, πότε έγινε mount
+το filesystem, πότε έγινε modify, ποιο version του filesystem είναι και ποιο Operating System το δημιούργησε.
+Όλα τα δεδομένα του superblock αποθηκεύονται στον δίσκο σε little endian format ώστε να είναι φορητό μεταξύ συστημάτων.
 
 14. Πού βρίσκεται μέσα στον δίσκο σε ένα σύστημα αρχείων ext2;
-### με mount/
-### hexedit
+Βρίσκεται στο offset 1024 bytes από την αρχή του δίσκου.
+
 15. Για ποιο λόγο έχει νόημα να υπάρχουν εφεδρικά αντίγραφα του superblock
 στο σύστημα αρχείων ext2;
-### με mount/
-### hexedit
+Έχει νόημα γιατί σε περίπτωση όπου υπάρξει corrupt στο σημείο του δίσκου όπου είναι αποθηκευμένο το superblock, δεν θα μπορούμε να 
+έχουμε πρόσβαση στις πληροφορίες που δίνει, δεν θα μπορούμε να κάνουμε mount και δεν θα μπορούμε να χρησιμοποιήσουμε το filesystem καθώς
+δεν θα έχουμε τα arguments για τις συναρτήσεις που θα χρειαστούμε για να τρέξουμε το filesystem (VFS).
+
 16. Σε ποια μπλοκ βρίσκονται αποθηκευμένα εφεδρικά αντίγραφα του superblock
 σε αυτό το σύστημα αρχείων;
-### με mount/
+56	2	s_magic
+offset size value_name
+s_magic
+16bit value identifying the file system as Ext2. The value is currently fixed to EXT2_SUPER_MAGIC of value 0xEF53.
+
+The first version of ext2 (revision 0) stores a copy at the start of every block group, along with backups of the group descriptor block(s).
+Because this can consume a considerable amount of space for large filesystems,
+later revisions can optionally reduce the number of backup copies by only putting backups in specific groups (this is the sparse superblock feature).
+The groups chosen are 0, 1 and powers of 3, 5 and 7.
+Revision 1 and higher of the filesystem also store extra fields, such as a volume name,
+a unique identification number, the inode size, and space for optional filesystem features to store configuration info.
+### με mount/ 
+από dumpe2fs /dev/vdb έχουμε πως τα εφεδρικά είναι στα blocks:
+8193
+16385
+24577
+32769
+40961
+49153
+
+Group 0: (Blocks 1-8192)
+  Primary superblock at 1, Group descriptors at 2-2
+  Block bitmap at 3 (+2)
+  Inode bitmap at 4 (+3)
+  Inode table at 5-233 (+4)
+  7944 free blocks, 1821 free inodes, 2 directories
+  Free blocks: 248-1024, 1026-8192
+  Free inodes: 12-1832
+Group 1: (Blocks 8193-16384)
+  Backup superblock at 8193, Group descriptors at 8194-8194
+  Block bitmap at 8195 (+2)
+  Inode bitmap at 8196 (+3)
+  Inode table at 8197-8425 (+4)
+  7958 free blocks, 1831 free inodes, 1 directories
+  Free blocks: 8427-16384
+  Free inodes: 1834-3664
+Group 2: (Blocks 16385-24576)
+  Backup superblock at 16385, Group descriptors at 16386-16386
+  Block bitmap at 16387 (+2)
+  Inode bitmap at 16388 (+3)
+  Inode table at 16389-16617 (+4)
+  7959 free blocks, 1832 free inodes, 0 directories
+  Free blocks: 16618-24576
+  Free inodes: 3665-5496
+Group 3: (Blocks 24577-32768)
+  Backup superblock at 24577, Group descriptors at 24578-24578
+  Block bitmap at 24579 (+2)
+  Inode bitmap at 24580 (+3)
+  Inode table at 24581-24809 (+4)
+  7959 free blocks, 1832 free inodes, 0 directories
+  Free blocks: 24810-32768
+  Free inodes: 5497-7328
+Group 4: (Blocks 32769-40960)
+  Backup superblock at 32769, Group descriptors at 32770-32770
+  Block bitmap at 32771 (+2)
+  Inode bitmap at 32772 (+3)
+  Inode table at 32773-33001 (+4)
+  7959 free blocks, 1832 free inodes, 0 directories
+  Free blocks: 33002-40960
+  Free inodes: 7329-9160
+Group 5: (Blocks 40961-49152)
+  Backup superblock at 40961, Group descriptors at 40962-40962
+  Block bitmap at 40963 (+2)
+  Inode bitmap at 40964 (+3)
+  Inode table at 40965-41193 (+4)
+  7959 free blocks, 1830 free inodes, 1 directories
+  Free blocks: 41194-49152
+  Free inodes: 9163-10992
+Group 6: (Blocks 49153-51199)
+  Backup superblock at 49153, Group descriptors at 49154-49154
+  Block bitmap at 49155 (+2)
+  Inode bitmap at 49156 (+3)
+  Inode table at 49157-49385 (+4)
+  1814 free blocks, 1832 free inodes, 0 directories
+  Free blocks: 49386-51199
+  Free inodes: 10993-12824
 ### hexedit
+root@utopia:~# hexdump -C /dev/vdb | grep '53 ef' κοιτάμε που έχουμε 53 ef magic number, σε little endian,
+ εκεί είναι τα copy του Superblock
+00000430  2f 6a 78 67 02 00 ff ff  53 ef 01 00 01 00 00 00  |/jxg....S.......|
+00800430  e5 7a 78 65 01 00 ff ff  53 ef 00 00 01 00 00 00  |.zxe....S.......|
+01000430  e5 7a 78 65 01 00 ff ff  53 ef 00 00 01 00 00 00  |.zxe....S.......|
+01800430  e5 7a 78 65 01 00 ff ff  53 ef 00 00 01 00 00 00  |.zxe....S.......|
+02000430  e5 7a 78 65 01 00 ff ff  53 ef 00 00 01 00 00 00  |.zxe....S.......|
+02800430  e5 7a 78 65 01 00 ff ff  53 ef 00 00 01 00 00 00  |.zxe....S.......|
+03000430  e5 7a 78 65 01 00 ff ff  53 ef 00 00 01 00 00 00  |.zxe....S.......|
+root@utopia:~#
+
+block number = [((offset_of_magic)-56)/block_size]
+Το +8 είναι το offset in line 
+0x430 = 1072 + 8 = 1080 - 56 = 1024 / 1024 = 1
+0x800430 = 8389680 + 8 = 8389688 - 56 = 8389632 / 1024 = 8193
+0x1000430 = 16778288 + 8 = 16778296 - 56 = 16778240 / 1024 = 16385
+0x1800430 = 25166896 + 8 = 25166904 - 56 = 25166848 / 1024 = 24577
+0x2000430 = 33555504 + 8 = 33555512 - 56 = 33555456 / 1024 = 32769
+0x2800430 = 41944112 + 8 = 41944120 - 56 = 41944064 / 1024 = 40961
+0x3000430 = 50332720 + 8 = 50332728 - 56 = 50332672 / 1024 = 49153
+
 17. Τι είναι ένα block group στο σύστημα αρχείων ext2;
-### με mount/
-### hexedit
+
 18. Πόσα block groups έχει ένα σύστημα αρχείων ext2 και πώς κατανέμονται;
 ### με mount/
 ### hexedit
@@ -418,12 +518,10 @@ le be decimal
 ### με mount/
 ### hexedit
 20. Τι είναι ο block group descriptor στο σύστημα αρχείων ext2;
-### με mount/
-### hexedit
+
 21. Για ποιο λόγο έχει νόημα να υπάρχουν εφεδρικά αντίγραφα των block group
 descriptors στο σύστημα αρχείων ext2;
-### με mount/
-### hexedit
+
 22. Σε ποια μπλοκ βρίσκονται αποθηκευμένα εφεδρικά αντίγραφα των block group
 descriptors σε αυτό το σύστημα αρχείων;
 ### με mount/
