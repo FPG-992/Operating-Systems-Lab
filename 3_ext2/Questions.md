@@ -1,6 +1,3 @@
-### με mount/
-### με hexedit
-
 https://wiki.osdev.org/Ext2
 https://www.nongnu.org/ext2-doc/ext2.html
 
@@ -675,6 +672,7 @@ bg_block_bitmap
 The actual block bitmap is located within its own allocated blocks starting at the block ID specified by this value.
 
 24. Τι είναι τα inode tables; Πού βρίσκονται μέσα στον δίσκο;
+Τα Inode Tables - Index Node Tables
 
 25. Τι πεδία περιέχει το κάθε inode; Πού αποθηκεύεται μέσα στον δίσκο;
 
