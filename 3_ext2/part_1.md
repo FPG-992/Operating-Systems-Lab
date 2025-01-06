@@ -309,3 +309,182 @@ root@utopia:~# hexdump -C /dev/vdb | grep '53 ef'
 02800430  e5 7a 78 65 01 00 ff ff  53 ef 00 00 01 00 00 00  |.zxe....S.......|
 03000430  e5 7a 78 65 01 00 ff ff  53 ef 00 00 01 00 00 00  |.zxe....S.......|
 ```
+Οπότε για να βρω το block number θα χρησιμοποιήσω τον τύπο: `block number = [((offset_of_magic)-56)/block_size]`, όπου *offset_of_magic* είναι το offset της γραμμής +8. Οπότε έχουμε:
+```bash
+0x430 -> 1072 + 8 -> 1080 - 56 -> 1024 / 1024 -> 1
+0x800430 -> 8389680 + 8 -> 8389688 - 56 -> 8389632 / 1024 -> 8193
+0x1000430 -> 16778288 + 8 -> 16778296 - 56 -> 16778240 / 1024 -> 16385
+0x1800430 -> 25166896 + 8 -> 25166904 - 56 -> 25166848 / 1024 -> 24577
+0x2000430 -> 33555504 + 8 -> 33555512 - 56 -> 33555456 / 1024 -> 32769
+0x2800430 -> 41944112 + 8 -> 41944120 - 56 -> 41944064 / 1024 -> 40961
+0x3000430 -> 50332720 + 8 -> 50332728 - 56 -> 50332672 / 1024 -> 49153
+```
+
+
+### Ερώτηση 17
+Στο σύστημα αρχείων ext2, το block group είναι μια βασική μονάδα οργάνωσης του χώρου στον δίσκο. Ο δίσκος χωρίζεται σε πολλές ομάδες μπλοκ (block groups), καθεμία από τις οποίες περιέχει έναν καθορισμένο αριθμό μπλοκ και τις απαραίτητες δομές δεδομένων για τη διαχείριση των μπλοκ και των inodes.
+Αυτή η προσέγγιση της ομαδοποίησης έχει σχεδιαστεί για να μειώσει την κατακερματισμένη αποθήκευση δεδομένων και να αυξήσει την ταχύτητα πρόσβασης, οργανώνοντας τα δεδομένα τοπικά σε κάθε block group.
+
+
+### Ερώτηση 18
+Ο αριθμός των block groups σε ένα σύστημα αρχείων ext2 εξαρτάται από το συνολικό μέγεθος του συστήματος αρχείων και το μέγεθος κάθε block group. Τα block groups κατανέμονται ομοιόμορφα στο σύστημα αρχείων και καθένα από αυτά διαχειρίζεται έναν καθορισμένο αριθμό μπλοκ.
+
+Ο αριθμός των block groups υπολογίζεται με τον τύπο:
+
+$$
+\text{Αριθμός Block Groups} = \left\lceil \frac{\text{Συνολικά Blocks στο Σύστημα Αρχείων}}{\text{Blocks ανά Block Group}} \right\rceil
+$$
+
+όπου:
+    * Συνολικά Blocks: Ο συνολικός αριθμός μπλοκ στο σύστημα αρχείων
+    * Blocks ανά Block Group: Εξαρτάται από το μέγεθος του block group, το οποίο καθορίζεται κατά τη δημιουργία του συστήματος αρχείων. Συνήθως, ένα block group περιέχει 8192 μπλοκ για μέγεθος μπλοκ 1 KB, 32768 μπλοκ για μέγεθος μπλοκ 4 KB, κ.λπ.
+
+
+### Ερώτηση 19
+#### Προσέγγιση: tools
+Με χρήση `dumpe2fs` βλέπουμε ότι:
+```bash
+root@utopia:~# dumpe2fs /dev/vdb
+...
+Group 0: (Blocks 1-8192)
+...
+Group 1: (Blocks 8193-16384)
+...
+Group 2: (Blocks 16385-24576)
+...
+Group 3: (Blocks 24577-32768)
+...
+Group 4: (Blocks 32769-40960)
+...
+Group 5: (Blocks 40961-49152)
+...
+Group 6: (Blocks 49153-51199)
+...
+```
+Άρα έχουμε 7 block groups.
+
+#### Προσέγγιση: hexedit
+Θα βρούμε το _Total number of blocks in file system_ (byte 4-7) και το _Number of blocks in each block group_ (byte 32-35):
+```bash
+root@utopia:~# hexdump -s 1024 -n 8 -C /dev/vdb
+00000400  18 32 00 00 00 c8 00 00                           |.2......|
+```
+Άρα έχουμε `00 c8 00 00`, δηλαδή `51200` συνολικά μπλοκ.
+
+```bash
+root@utopia:~# hexdump -s 1024 -n 36 -C /dev/vdb
+00000400  18 32 00 00 00 c8 00 00  00 0a 00 00 90 c1 00 00  |.2..............|
+00000410  0a 32 00 00 01 00 00 00  00 00 00 00 00 00 00 00  |.2..............|
+00000420  00 20 00 00                                       |. ..|
+00000424
+```
+Άρα έχουμε `00 20 00 00 `, δηλαδή `8192` μπλοκ σε κάθε group. Συνεπώς έοχυμε 51200 / 8192 = 6.25, άρα 7 block groups.
+
+
+### Ερώτηση 20
+Ο block group descriptor στο σύστημα αρχείων ext2 είναι μια κρίσιμη δομή δεδομένων που περιγράφει τις βασικές πληροφορίες για κάθε block group. Είναι ουσιαστικά ένας "χάρτης" που επιτρέπει στο λειτουργικό σύστημα να διαχειρίζεται και να εντοπίζει τις βασικές δομές του block group, όπως τα bitmap και τους πίνακες inodes.
+```c
+struct ext2_group_desc
+{
+	__u32	bg_block_bitmap        /* Blocks bitmap block */
+	__u32	bg_inode_bitmap;       /* Inodes bitmap block */
+	__u32	bg_inode_table;		   /* Inodes table block */
+	__u16	bg_free_blocks_count;  /* Free blocks count */
+	__u16	bg_free_inodes_count;  /* Free inodes count */
+	__u16	bg_used_dirs_count;	   /* Directories count */
+	__u16	bg_pad;
+	__u32	bg_reserved[3];
+};
+```
+
+
+### Ερώτηση 21
+Η ύπαρξη εφεδρικών αντιγράφων των block group descriptors στο σύστημα αρχείων ext2 έχει μεγάλη σημασία για την ανθεκτικότητα, την αξιοπιστία και την ανάκτηση του συστήματος αρχείων. Οι block group descriptors είναι ζωτικής σημασίας για τη λειτουργία του συστήματος, καθώς περιέχουν πληροφορίες για τη δομή και τη διαχείριση κάθε block group. Αν καταστραφούν, η πρόσβαση στα δεδομένα και στα μεταδεδομένα του συστήματος αρχείων μπορεί να γίνει αδύνατη.
+
+
+### Ερώτηση 22
+#### Προσέγγιση: tools
+Με χρήση `dumpe2fs` βλέπουμε ότι:
+```bash
+root@utopia:~# dumpe2fs /dev/vdb
+...
+Group 1: (Blocks 8193-16384)
+  Backup superblock at 8193, Group descriptors at 8194-8194
+  ...
+Group 2: (Blocks 16385-24576)
+  Backup superblock at 16385, Group descriptors at 16386-16386
+  ...
+Group 3: (Blocks 24577-32768)
+  Backup superblock at 24577, Group descriptors at 24578-24578
+  ...
+Group 4: (Blocks 32769-40960)
+  Backup superblock at 32769, Group descriptors at 32770-32770
+  ...
+Group 5: (Blocks 40961-49152)
+  Backup superblock at 40961, Group descriptors at 40962-40962
+Group 6: (Blocks 49153-51199)
+  Backup superblock at 49153, Group descriptors at 49154-49154
+  ...
+```
+
+#### Προσέγγιση: hexedit
+Ξέρουμε ότι οι block group descriptors βρίσκονται μετά από τα superblocks.
+Άρα στα: 2, 8194 ,16386, 24578, 32770, 40962, 49154.
+Για τους group descriptors έχουμε:
+```
+Offset (bytes)	Size (bytes)	Description
+0	4	bg_block_bitmap
+4	4	bg_inode_bitmap
+8	4	bg_inode_table
+12	2	bg_free_blocks_count
+14	2	bg_free_inodes_count
+16	2	bg_used_dirs_count
+18	2	bg_pad
+20	12	bg_reserved
+
+32 bytes total.
+```
+Φτιάξαμε ένα script το οποίο παράγει τα hexdumps που πρέπει να τρέξουμε για να πάρουμε το ζητούμενο:
+```python
+BLOCK_SIZE = 1024
+BLOCK_NUMBERS = [2, 8194, 16386, 24578, 32770, 40962, 49154]
+DEVICE = "/dev/vdb"
+
+def calculate_offset(block_number):
+    return block_number * BLOCK_SIZE
+
+def generate_commands(block_numbers, device):
+    for block in block_numbers:
+        offset = calculate_offset(block)
+        offset_hex = hex(offset)
+        print(f"hexdump -C -s {offset} -n 32 {device} # Block {block} (Offset: {offset} / {offset_hex})")
+
+if __name__ == "__main__":
+    generate_commands(BLOCK_NUMBERS, DEVICE)
+```
+Με αποτέλεσμα:
+```bash
+hexdump -C -s 2048 -n 32 /dev/vdb # Block 2 (Offset: 2048 / 0x800)
+hexdump -C -s 8390656 -n 32 /dev/vdb # Block 8194 (Offset: 8390656 / 0x800800)
+hexdump -C -s 16779264 -n 32 /dev/vdb # Block 16386 (Offset: 16779264 / 0x1000800)
+hexdump -C -s 25167872 -n 32 /dev/vdb # Block 24578 (Offset: 25167872 / 0x1800800)
+hexdump -C -s 33556480 -n 32 /dev/vdb # Block 32770 (Offset: 33556480 / 0x2000800)
+hexdump -C -s 41945088 -n 32 /dev/vdb # Block 40962 (Offset: 41945088 / 0x2800800)
+hexdump -C -s 50333696 -n 32 /dev/vdb # Block 49154 (Offset: 50333696 / 0x3000800)
+```
+
+Τρέχοντας οποιοδήποτε βλέπουμε τους ίδιους αριθμούς, γεγονός που βγάζει νόημα καθώς ταιριάζουν με αυτούς που ξεκινάνε στα 2048 bytes (1024*2block) όπου είναι το block #2 που περιέχει το original block group descriptor table BGDT.
+```bash
+00000800  03 00 00 00 04 00 00 00  05 00 00 00 08 1f 1d 07  |................|
+00000810  02 00 04 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+00000820
+```
+
+### Ερώτηση 23
+Το block bitmap και το inode bitmap είναι κρίσιμες δομές δεδομένων στο σύστημα αρχείων ext2, οι οποίες χρησιμοποιούνται για τη διαχείριση του χώρου αποθήκευσης και των inodes, αντίστοιχα.
+
+Το block bitmap είναι ένας χάρτης που παρακολουθεί την κατάσταση όλων των blocks δεδομένων μέσα σε ένα block group. Κάθε bit στο block bitmap αντιστοιχεί σε ένα block του block group και είναι 1 αν το block είναι κατειλημμένο, αλλίως 0. Όταν το σύστημα αρχείων χρειάζεται να αποθηκεύσει νέα δεδομένα, χρησιμοποιεί το block bitmap για να εντοπίσει ένα ελεύθερο block.
+
+Το inode bitmap είναι ένας χάρτης που παρακολουθεί την κατάσταση όλων των inodes μέσα σε ένα block group. Κάθε bit στο inode bitmap αντιστοιχεί σε ένα inode του block group και είναι 1 αν το inode είναι κατειλημμένο (χρησιμοποιείται από ένα αρχείο ή κατάλογο), αλλίως 0. Όταν δημιουργείται ένα νέο αρχείο ή κατάλογος, το σύστημα βρίσκει ένα διαθέσιμο inode μέσω του inode bitmap.
+
+Το block bitmap και το inode bitmap βρίσκονται στο block group όπου ανήκουν και είναι αποθηκευμένα σε προκαθορισμένα σημεία. Το block bitmap βρίσκεται μετά το superblock και τους block group descriptors. Το inode bitmap βρίσκεται αμέσως μετά το block bitmap.
