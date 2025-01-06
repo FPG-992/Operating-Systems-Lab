@@ -488,6 +488,8 @@ https://wiki.osdev.org/Ext2#What_is_a_Block_Group?
 
 Ο αλγόριθμος που κάνει allocate τα block προσπαθεί να τα βάλει στο ίδιο blockgroup με το index node που τα περιέχει.
 
+Κατανέμονται στο χώρο του δίσκου σειριακά.
+
 19. Πόσα block groups περιέχει αυτό το σύστημα αρχείων;
 
 ### με mount/
@@ -672,36 +674,96 @@ bg_block_bitmap
 The actual block bitmap is located within its own allocated blocks starting at the block ID specified by this value.
 
 24. Τι είναι τα inode tables; Πού βρίσκονται μέσα στον δίσκο;
-Τα Inode Tables - Index Node Tables
+Τα Inode Tables - Index Node Tables είναι ένας πίνακας όπου αποθηκεύονται τα inodes του κάθε block group.
+Τα inode tables βρίσκονται μέσα σε κάθε block group, τα οποία block groups αποθηκεύονται σειριακά μέσα στο δίσκο το ένα μετά το άλλο. 
 
 25. Τι πεδία περιέχει το κάθε inode; Πού αποθηκεύεται μέσα στον δίσκο;
+struct ext2_inode {
+        __u16   i_mode;         /* File type and access rights */
+        __u16   i_uid;          /* Low 16 bits of Owner Uid */
+        __u32   i_size;         /* Size in bytes */
+        __u32   i_atime;        /* Access time */
+        __u32   i_ctime;        /* Creation time */
+        __u32   i_mtime;        /* Modification time */
+        __u32   i_dtime;        /* Deletion Time */
+        __u16   i_gid;          /* Low 16 bits of Group Id */
+        __u16   i_links_count;  /* Links count */
+        __u32   i_blocks;       /* Blocks count */
+        __u32   i_flags;        /* File flags */
+	...
+	__u32   i_block[EXT2_N_BLOCKS];  /* Pointers to blocks */
+	...
+};
+
+Αποθηκεύονται μέσα στα inode tables
+
+???
 
 26. Πόσα μπλοκ και πόσα inodes περιέχει το κάθε block group σε αυτό το σύστημα αρχείων;
+
 ### με mount/
+
+
 ### hexedit
+
+
 27. Σε ποιο inode αντιστοιχεί το αρχείο /dir2/helloworld σε αυτό το σύστημα
 αρχείων;
+
 ### με mount/
+
+
 ### hexedit
+
+
 28. Σε ποιο block group αντιστοιχεί αυτό το inode;
+
 ### με mount/
+
+
 ### hexedit
+
+
 29. Σε ποιο μπλοκ του δίσκου υπάρχει το inode table που περιέχει το παραπάνω
 inode;
+
 ### με mount/
+
+
 ### hexedit
+
+
 30. Δείξτε όλα τα πεδία αυτού του inode [128 bytes].
+
 ### με mount/
+
+
 ### hexedit
+
+
 31. Σε ποιο μπλοκ είναι αποθηκευμένα τα δεδομένα αυτού του αρχείου;
+
 ### με mount/
+
+
 ### hexedit
+
+
 32. Τι μέγεθος έχει αυτό το αρχείο;
+
 ### με mount/
+
+
 ### hexedit
+
+
 33. Δείξτε τα περιεχόμενα αυτού του αρχείου.
+
 ### με mount/
+
+
 ### hexedit
+
 
 **Image 2**
 
