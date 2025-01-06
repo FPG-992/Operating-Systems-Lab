@@ -702,9 +702,28 @@ struct ext2_inode {
 26. Πόσα μπλοκ και πόσα inodes περιέχει το κάθε block group σε αυτό το σύστημα αρχείων;
 
 ### με mount/
-
+dumpe2fs
+Blocks per group:         8192
+Inodes per group:         1832
 
 ### hexedit
+Superblock
+32	4	s_blocks_per_group
+40	4	s_inodes_per_group
+offset size_in_bytes value_name
+
+root@utopia:~# hexdump -C -s 1024 -n 36 /dev/vdb # Block 49154 (Offset: 50333696 / 0x3000800)
+00000400  18 32 00 00 00 c8 00 00  00 0a 00 00 90 c1 00 00  |.2..............|
+00000410  0a 32 00 00 01 00 00 00  00 00 00 00 00 00 00 00  |.2..............|
+00000420  00 20 00 00                                       |. ..|
+
+root@utopia:~# hexdump -C -s 1024 -n 44 /dev/vdb # Block 49154 (Offset: 50333696 / 0x3000800)
+00000400  18 32 00 00 00 c8 00 00  00 0a 00 00 90 c1 00 00  |.2..............|
+00000410  0a 32 00 00 01 00 00 00  00 00 00 00 00 00 00 00  |.2..............|
+00000420  00 20 00 00 00 20 00 00  28 07 00 00              |. ... ..(...|
+
+s_blocks_per_group = 0x2000 = 8192 decimal
+s_inodes_per_group = 0x728 = 1832 decimal
 
 
 27. Σε ποιο inode αντιστοιχεί το αρχείο /dir2/helloworld σε αυτό το σύστημα
