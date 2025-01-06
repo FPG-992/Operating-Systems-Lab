@@ -80,43 +80,6 @@ Virtio: An I/O virtualization framework for Linux
 
 το disk1 αντιστοιχεί στο vdb
 
-
-Starting
-Byte
-
-Ending
-Byte
-
-Size
-in Bytes
-
-Field Description
-0	3	4	Total number of inodes in file system
-4	7	4	Total number of blocks in file system
-8	11	4	Number of blocks reserved for superuser (see offset 80)
-12	15	4	Total number of unallocated blocks
-16	19	4	Total number of unallocated inodes
-20	23	4	Block number of the block containing the superblock (also the starting block number, NOT always zero.)
-24	27	4	log2 (block size) - 10. (In other words, the number to shift 1,024 to the left by to obtain the block size)
-28	31	4	log2 (fragment size) - 10. (In other words, the number to shift 1,024 to the left by to obtain the fragment size)
-32	35	4	Number of blocks in each block group
-36	39	4	Number of fragments in each block group
-40	43	4	Number of inodes in each block group
-44	47	4	Last mount time (in POSIX time)
-48	51	4	Last written time (in POSIX time)
-52	53	2	Number of times the volume has been mounted since its last consistency check (fsck)
-54	55	2	Number of mounts allowed before a consistency check (fsck) must be done
-56	57	2	Ext2 signature (0xef53), used to help confirm the presence of Ext2 on a volume
-58	59	2	File system state (see below)
-60	61	2	What to do when an error is detected (see below)
-62	63	2	Minor portion of version (combine with Major portion below to construct full version field)
-64	67	4	POSIX time of last consistency check (fsck)
-68	71	4	Interval (in POSIX time) between forced consistency checks (fsck)
-72	75	4	Operating system ID from which the filesystem on this volume was created (see below)
-76	79	4	Major portion of version (combine with Minor portion above to construct full version field)
-80	81	2	User ID that can use reserved blocks
-82	83	2	Group ID that can use reserved blocks
-
 ### με hexedit
 
 root@utopia:~# hexdump -s 1024 -n 1024 -C /dev/vdb
@@ -487,6 +450,7 @@ Group 6: (Blocks 49153-51199)
   1814 free blocks, 1832 free inodes, 0 directories
   Free blocks: 49386-51199
   Free inodes: 10993-12824
+
 ### hexedit
 root@utopia:~# hexdump -C /dev/vdb | grep '53 ef' κοιτάμε που έχουμε 53 ef magic number, σε little endian,
  εκεί είναι τα copy του Superblock
@@ -510,32 +474,185 @@ block number = [((offset_of_magic)-56)/block_size]
 0x3000430 = 50332720 + 8 = 50332728 - 56 = 50332672 / 1024 = 49153
 
 17. Τι είναι ένα block group στο σύστημα αρχείων ext2;
+Τα blocks ομαδοποιούνται σε block groups ώστε να μειωθεί ο κατακερματισμός και το head seeking όταν
+διαβάζουμε μεγάλα δεδομένα που βρίσκονται σε σειριακή κατανομή.
+Πληροφορίες για κάθε blockgroup βρίσκουμε στο descriptor table που βρίσκονται στα block αμέσως μετά τα superblocks.
+Ο αλγόριθμος που κάνει allocate τα block προσπαθεί να τα βάλει στο ίδιο blockgroup με το index node που τα περιέχει.
 
 18. Πόσα block groups έχει ένα σύστημα αρχείων ext2 και πώς κατανέμονται;
-### με mount/
-### hexedit
+
+Από το Superblock, παίρνουμε το μέγεθος κάθε block, τον συνολικό αριθμό των inodes, τον συνολικό αριθμό των blocks, τον αριθμό των blocks ανά block group και τον αριθμό των inodes σε κάθε block group. 
+Από αυτές τις πληροφορίες μπορούμε να συμπεράνουμε τον αριθμό των block groups που υπάρχουν με τον εξής τρόπο:
+
+Στρογγυλοποίηση προς τα πάνω του συνολικού αριθμού των blocks διαιρούμενου με τον αριθμό των blocks ανά block group.
+Στρογγυλοποίηση προς τα πάνω του συνολικού αριθμού των inodes διαιρούμενου με τον αριθμό των inodes ανά block group.
+Και τα δύο (και να τα ελέγξουμε μεταξύ τους).
+https://wiki.osdev.org/Ext2#What_is_a_Block_Group?
+
+Ο αλγόριθμος που κάνει allocate τα block προσπαθεί να τα βάλει στο ίδιο blockgroup με το index node που τα περιέχει.
+
 19. Πόσα block groups περιέχει αυτό το σύστημα αρχείων;
+
 ### με mount/
+Από το dumpe2fs βλέπουμε πως έχουμε 7 block groups με το καθένα να περιέχει τα πρώτα n+1(8192blocks)
+
 ### hexedit
+θα βρούμε το 
+s_blocks_count (offset 4) και το s_blocks_per_group και θα τα διαιρέσουμε (offset 32), rounding up.
+4	4	s_blocks_count
+32	4	s_blocks_per_group
+
+root@utopia:~# hexdump -s 1024 -n 8 -C /dev/vdb
+00000400  18 32 00 00 00 c8 00 00                           |.2......|
+00000408
+root@utopia:~
+00 c8 00 00 le -> 0x0000c800 = 51200 decimal total blocks
+
+root@utopia:~# hexdump -s 1024 -n 36 -C /dev/vdb
+00000400  18 32 00 00 00 c8 00 00  00 0a 00 00 90 c1 00 00  |.2..............|
+00000410  0a 32 00 00 01 00 00 00  00 00 00 00 00 00 00 00  |.2..............|
+00000420  00 20 00 00                                       |. ..|
+00000424
+
+00 20 00 00 le -> 0x00002000 = 8192 decimal
+
+51200 / 8192 = 6.25 = 7 block groups 
+
 20. Τι είναι ο block group descriptor στο σύστημα αρχείων ext2;
+Ο group descriptor έχει πληροφορίες σχετικά με το group που περιγράφει, μαζί με τον αριθμό του block που ξεκινάει το index node (inode) του.
+
+struct ext2_group_desc
+{
+	__u32	bg_block_bitmap;	/* Blocks bitmap block */
+	__u32	bg_inode_bitmap;	/* Inodes bitmap block */
+	__u32	bg_inode_table;		/* Inodes table block */
+	__u16	bg_free_blocks_count;	/* Free blocks count */
+	__u16	bg_free_inodes_count;	/* Free inodes count */
+	__u16	bg_used_dirs_count;	/* Directories count */
+	__u16	bg_pad;
+	__u32	bg_reserved[3];
+};
+
+https://www.science.smith.edu/~nhowe/262/oldlabs/ext2.html
 
 21. Για ποιο λόγο έχει νόημα να υπάρχουν εφεδρικά αντίγραφα των block group
 descriptors στο σύστημα αρχείων ext2;
 
+Σε περίπτωση που γίνει corrupt το block που περιέχει τα block group descriptors ή το block group descriptor array, για να μπορέσουμε να βρούμε τις πληροφορίες για τα groups.
+
 22. Σε ποια μπλοκ βρίσκονται αποθηκευμένα εφεδρικά αντίγραφα των block group
 descriptors σε αυτό το σύστημα αρχείων;
+
+The block group descriptor table is an array of block group descriptor, used to define parameters of all the block groups.
+ It provides the location of the inode bitmap and inode table, block bitmap, number of free blocks and inodes, and some other useful information.
+
+The block group descriptor table starts on the first block following the superblock. 
+This would be the third block on a 1KiB block file system, or the second block for 2KiB and larger block file systems. Shadow copies of the block group descriptor table are also stored with every copy of the superblock.
+https://www.nongnu.org/ext2-doc/ext2.html#block-group-descriptor-table
 ### με mount/
+Group 0: (Blocks 1-8192)
+  Primary superblock at 1, Group descriptors at 2-2
+Group 1: (Blocks 8193-16384)
+  Backup superblock at 8193, Group descriptors at 8194-8194
+Group 2: (Blocks 16385-24576)
+  Backup superblock at 16385, Group descriptors at 16386-16386
+Group 3: (Blocks 24577-32768)
+  Backup superblock at 24577, Group descriptors at 24578-24578
+Group 4: (Blocks 32769-40960)
+  Backup superblock at 32769, Group descriptors at 32770-32770
+Group 5: (Blocks 40961-49152)
+  Backup superblock at 40961, Group descriptors at 40962-40962
+Group 6: (Blocks 49153-51199)
+  Backup superblock at 49153, Group descriptors at 49154-49154
+
 ### hexedit
+ξέρουμε πως είναι στο block μετά το superblock από την θεωρία. Άρα στα: 2, 8194 ,16386, 24578, 32770, 40962, 49154
+με hexdump κοιτάμε με offset την διεύθυνση που ξεκινάει το κάθε block 
+offset = block_number * block_size και μετά σε hex
+
+Table 3.12. Block Group Descriptor Structure
+
+Offset (bytes)	Size (bytes)	Description
+0	4	bg_block_bitmap
+4	4	bg_inode_bitmap
+8	4	bg_inode_table
+12	2	bg_free_blocks_count
+14	2	bg_free_inodes_count
+16	2	bg_used_dirs_count
+18	2	bg_pad
+20	12	bg_reserved
+
+32 bytes total.
+
+generate_command.py
+BLOCK_SIZE = 1024
+BLOCK_NUMBERS = [2, 8194, 16386, 24578, 32770, 40962, 49154]
+DEVICE = "/dev/vdb"
+
+def calculate_offset(block_number):
+    return block_number * BLOCK_SIZE
+
+def generate_commands(block_numbers, device):
+    for block in block_numbers:
+        offset = calculate_offset(block)
+        offset_hex = hex(offset)
+        print(f"hexdump -C -s {offset} -n 32 {device} # Block {block} (Offset: {offset} / {offset_hex})")
+
+if __name__ == "__main__":
+    generate_commands(BLOCK_NUMBERS, DEVICE)
+
+hexdump -C -s 2048 -n 32 /dev/vdb # Block 2 (Offset: 2048 / 0x800)
+hexdump -C -s 8390656 -n 32 /dev/vdb # Block 8194 (Offset: 8390656 / 0x800800)
+hexdump -C -s 16779264 -n 32 /dev/vdb # Block 16386 (Offset: 16779264 / 0x1000800)
+hexdump -C -s 25167872 -n 32 /dev/vdb # Block 24578 (Offset: 25167872 / 0x1800800)
+hexdump -C -s 33556480 -n 32 /dev/vdb # Block 32770 (Offset: 33556480 / 0x2000800)
+hexdump -C -s 41945088 -n 32 /dev/vdb # Block 40962 (Offset: 41945088 / 0x2800800)
+hexdump -C -s 50333696 -n 32 /dev/vdb # Block 49154 (Offset: 50333696 / 0x3000800)
+>>>
+
+τρέχοντας τα commands βλέπουμε:
+
+hexdump -C -s 8390656 -n 32 /dev/vdb # Block 8194 (Offset: 8390656 / 0x800800)
+hexdump -C -s 16779264 -n 32 /dev/vdb # Block 16386 (Offset: 16779264 / 0x1000800)
+hexdump -C -s 25167872 -n 32 /dev/vdb # Block 24578 (Offset: 25167872 / 0x1800800)
+hexdump -C -s 33556480 -n 32 /dev/vdb # Block 32770 (Offset: 33556480 / 0x2000800)
+hexdump -C -s 41945088 -n 32 /dev/vdb # Block 40962 (Offset: 41945088 / 0x2800800)
+hexdump -C -s 50333696 -n 32 /dev/vdb # Block 49154 (Offset: 50333696 / 0x3000800)
+00000800  03 00 00 00 04 00 00 00  05 00 00 00 08 1f 1d 07  |................|
+00000810  02 00 04 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+00000820
+00800800  03 00 00 00 04 00 00 00  05 00 00 00 0a 1f 1d 07  |................|
+00800810  02 00 04 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+00800820
+01000800  03 00 00 00 04 00 00 00  05 00 00 00 0a 1f 1d 07  |................|
+01000810  02 00 04 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+01000820
+01800800  03 00 00 00 04 00 00 00  05 00 00 00 0a 1f 1d 07  |................|
+01800810  02 00 04 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+01800820
+02000800  03 00 00 00 04 00 00 00  05 00 00 00 0a 1f 1d 07  |................|
+02000810  02 00 04 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+02000820
+02800800  03 00 00 00 04 00 00 00  05 00 00 00 0a 1f 1d 07  |................|
+02800810  02 00 04 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+02800820
+03000800  03 00 00 00 04 00 00 00  05 00 00 00 0a 1f 1d 07  |................|
+03000810  02 00 04 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+03000820
+
+Παρατηρούμε τους ίδιους αριθμούς, γεγονός που βγάζει νόημα καθώς ταιριάζουν με αυτούς που ξεκινάνε στα 2048 bytes (1024*2block) όπου είναι το block #2 που περιέχει το original block group descriptor table BGDT
+root@utopia:/home# hexdump -C -s 2048 -n 32 /dev/vdb # Block 49154 (Offset: 50333696 / 0x3000800)
+00000800  03 00 00 00 04 00 00 00  05 00 00 00 08 1f 1d 07  |................|
+00000810  02 00 04 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+00000820
+
 23. Τι είναι το block bitmap και τι το inode bitmap; Πού βρίσκονται μέσα στον
 δίσκο;
-### με mount/
-### hexedit
+
 24. Τι είναι τα inode tables; Πού βρίσκονται μέσα στον δίσκο;
-### με mount/
-### hexedit
+
 25. Τι πεδία περιέχει το κάθε inode; Πού αποθηκεύεται μέσα στον δίσκο;
-### με mount/
-### hexedit
+
 26. Πόσα μπλοκ και πόσα inodes περιέχει το κάθε block group σε αυτό το σύστημα αρχείων;
 ### με mount/
 ### hexedit
@@ -565,4 +682,45 @@ inode;
 
 **Image 2**
 
+1. Συνδέστε την εικόνα του δίσκου στην εικονική μηχανή σας, όπως κάνατε και
+για την εικόνα fsdisk1.img και προσαρτήστε τη στον κατάλογο /mnt.
+
+2. Χρησιμοποιήστε την εντολή touch για να δημιουργήσετε ένα νέο κενό αρχείο /file1 μέσα στο συγκεκριμένο σύστημα αρχείων. Βεβαιωθείτε ότι η
+εντολή σας αναφέρεται πράγματι στο συγκεκριμένο σύστημα αρχείων [σε
+ποιον κατάλογο το έχετε προσαρτήσει;], κι όχι στον ριζικό κατάλογο του συστήματος.
+
+3. Πέτυχε η εντολή; Αν όχι, τι πρόβλημα υπήρξε;
+
+4. Ποια κλήση συστήματος προσπάθησε να τρέξει η touch, και με ποιον κωδικό λάθους απέτυχε; Υποστηρίξτε την απάντησή σας με χρήση της εντολής
+strace.
+
+5. Πόσα αρχεία και πόσους καταλόγους περιέχει το συγκεκριμένο σύστημα αρχείων;
+
+6. Πόσο χώρο καταλαμβάνουν τα δεδομένα και τα μεταδεδομένα του συγκεκριμένου συστήματος αρχείων;
+
+7. Πόσο είναι το μέγεθος του συγκεκριμένου συστήματος αρχείων;
+
+8. Πόσα μπλοκ είναι διαθέσιμα/ελεύθερα στο συγκεκριμένο σύστημα αρχείων;
+Ισοδύναμα, έχει ελεύθερο χώρο το συγκεκριμένο σύστημα αρχείων;
+
+9. Αφού υπάρχουν διαθέσιμα μπλοκ, τι σας αποτρέπει από το να δημιουργήσετε
+νέο αρχείο;
+
 **Image 3**
+
+1. Ποιο εργαλείο στο Linux αναλαμβάνει τον έλεγχο ενός συστήματος αρχείων
+ext2 για αλλοιώσεις;
+
+2. Ποιοι παράγοντες θα μπορούσαν δυνητικά να οδηγήσουν σε αλλοιώσεις στο
+σύστημα αρχείων; Αναφέρετε ενδεικτικά δέκα πιθανές αλλοιώσεις.
+
+3. Τρέξτε το εργαλείο αυτό και επιδιορθώστε το σύστημα αρχείων. Αναφέρετε
+όλες τις αλλοιώσεις που εντοπίσατε, εξαντλητικά.
+
+4. Επαναφέρετε το δίσκο στην πρότερή του κατάσταση, από την αρχική εικόνα.  
+Εντοπίστε τις αλλοιώσεις με χρήση της μεθόδου hexedit.
+
+5. Επιδιορθώστε κάθε αλλοίωση ξεχωριστά με χρήση της μεθόδου hexedit. Για
+κάθε μία από τις αλλοιώσεις που επιδιορθώνετε, τρέξτε το εργαλείο fsck με
+τρόπο που δεν προκαλεί καμία αλλαγή [“dry run”] και επιβεβαιώστε ότι πλέον
+δεν την εντοπίζει.
