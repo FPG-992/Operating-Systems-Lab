@@ -648,6 +648,31 @@ root@utopia:/home# hexdump -C -s 2048 -n 32 /dev/vdb # Block 49154 (Offset: 5033
 
 23. Τι είναι το block bitmap και τι το inode bitmap; Πού βρίσκονται μέσα στον
 δίσκο;
+Είναι μια δομή στον δίσκο που δείχνει ποια blocks σε ένα συγκεκριμένο group είναι allocated και ποια όχι.
+Κάθε block bitmap δείχνει το current state ενός block μέσα σε ένα block group. 1 = used, 0 = free/available
+Τα πρώτα 8 blocks του group αντιστοιχούν στα bits 0...7 του byte 0 
+Τα επόμενα 8 blocks στα bits 0...7 του byte 1 και ούτω καθεξής
+
+Σε μικρά συστήματα αρχείων, βρίσκονται συνήθως στο πρώτο block, ή στο δεύτερο εάν υπάρχει superblock backup σε κάθε block group. 
+
+Μπορούμε να το δούμε διαβάζοντας την τιμή bg_block_bitmap που αντιστοιχεί στο αντίστοιχο group descriptor.
+
+root@utopia:~# hexdump -C -s 2048 -n 32 /dev/vdb # Block 49154 (Offset: 50333696 / 0x3000800)
+00000800  03 00 00 00 04 00 00 00  05 00 00 00 08 1f 1d 07  |................|
+00000810  02 00 04 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+00000820
+
+εδώ βλέπουμε πως αντιστοιχεί στο 3ο block, δηλαδή στο επόμενο block από αυτό των group descriptors
+
+Group 0: (Blocks 1-8192)
+  Primary superblock at 1, Group descriptors at 2-2
+  Block bitmap at 3 (+2)
+  Inode bitmap at 4 (+3)
+
+bg_block_bitmap
+32bit block id of the first block of the “block bitmap” for the group represented.
+
+The actual block bitmap is located within its own allocated blocks starting at the block ID specified by this value.
 
 24. Τι είναι τα inode tables; Πού βρίσκονται μέσα στον δίσκο;
 
