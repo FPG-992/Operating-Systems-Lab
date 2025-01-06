@@ -346,36 +346,124 @@ root@utopia:/home/user/shared# hexdump -s 1024 -n 32 -C /dev/vdb
 έχουμε πως s_log_block_size = 0 ==> 1024 * 2^0 = 1024bytes
 
 10. Τι είναι το inode σε ένα σύστημα αρχείων;
+
+Το index node είναι μια δομή που αντιπροσωπεύει κάθε αντικείμενο σε ένα filesystem.
+Η δομή του inode περιέχει pointers (δείκτες) στα block του συστήματος αρχείων που περιέχουν τα δεδομένα που υπάρχουν στο αντικείμενο και όλα τα υπόλοιπα μεταδεδομένα του αντικειμένου εκτός από
+το όνομά του. (permissions, owner, group, flags, size, number of blocks used, access time, change time,
+modification time, deletion time, number of links, fragments, version (for NFS) and extended attributes (EAs) and/or Access Control Lists (ACLs).
+
 11. Τι μέγεθος έχει το inode σε αυτό το σύστημα αρχείων;
+s_inode_size
+16bit value indicating the size of the inode structure. In revision 0, this value is always 128 (EXT2_GOOD_OLD_INODE_SIZE). 
+In revision 1 and later, this value must be a perfect power of 2 and must be smaller or equal to the block size (1<<s_log_block_size).
+88	2	s_inode_size
+offset bytes name
+
+### με mount/
+με dumpe2fs /dev/vdb
+Inode size:               128bytes
+
+### hexedit
+root@utopia:~# hexdump -s 1024 -n 90 -C /dev/vdb
+00000400  18 32 00 00 00 c8 00 00  00 0a 00 00 90 c1 00 00  |.2..............|
+00000410  0a 32 00 00 01 00 00 00  00 00 00 00 00 00 00 00  |.2..............|
+00000420  00 20 00 00 00 20 00 00  28 07 00 00 a6 66 78 67  |. ... ..(....fxg|
+00000430  2f 6a 78 67 02 00 ff ff  53 ef 01 00 01 00 00 00  |/jxg....S.......|
+00000440  e4 7a 78 65 00 00 00 00  00 00 00 00 01 00 00 00  |.zxe............|
+00000450  00 00 00 00 0b 00 00 00  80 00                    |..........|
+
+βλέπουμε 80 00 σε little endian -> 0x0080 σε big endian -> σε δεκαδικό = 128bytes
 12. Πόσα διαθέσιμα μπλοκ και πόσα διαθέσιμα inodes υπάρχουν σε αυτό το σύστημα αρχείων;
+s_free_blocks_count
+32bit value indicating the total number of free blocks, including the number of reserved blocks (see s_r_blocks_count). This is a sum of all free blocks of all the block groups.
+
+s_free_inodes_count
+32bit value indicating the total number of free inodes. This is a sum of all free inodes of all the block groups
+12	4	s_free_blocks_count
+16	4	s_free_inodes_count
+offset bytes value_name
+### με mount/
+Free blocks:              49552
+Free inodes:              12810
+### hexedit
+root@utopia:~# hexdump -s 1024 -n 20 -C /dev/vdb
+00000400  18 32 00 00 00 c8 00 00  00 0a 00 00 90 c1 00 00  |.2..............|
+00000410  0a 32 00 00     
+                                  |.2..|
+le be decimal
+90 c1 00 00 = 0x0000c190 = free blocks: 49552 (decimal)
+0a 32 00 00  = 0x0000320a = free inodes: 12810 (decimal)
+
 13. Τι είναι το superblock στο σύστημα αρχείων ext2;
+
+
 14. Πού βρίσκεται μέσα στον δίσκο σε ένα σύστημα αρχείων ext2;
+### με mount/
+### hexedit
 15. Για ποιο λόγο έχει νόημα να υπάρχουν εφεδρικά αντίγραφα του superblock
 στο σύστημα αρχείων ext2;
+### με mount/
+### hexedit
 16. Σε ποια μπλοκ βρίσκονται αποθηκευμένα εφεδρικά αντίγραφα του superblock
 σε αυτό το σύστημα αρχείων;
+### με mount/
+### hexedit
 17. Τι είναι ένα block group στο σύστημα αρχείων ext2;
+### με mount/
+### hexedit
 18. Πόσα block groups έχει ένα σύστημα αρχείων ext2 και πώς κατανέμονται;
+### με mount/
+### hexedit
 19. Πόσα block groups περιέχει αυτό το σύστημα αρχείων;
+### με mount/
+### hexedit
 20. Τι είναι ο block group descriptor στο σύστημα αρχείων ext2;
+### με mount/
+### hexedit
 21. Για ποιο λόγο έχει νόημα να υπάρχουν εφεδρικά αντίγραφα των block group
 descriptors στο σύστημα αρχείων ext2;
+### με mount/
+### hexedit
 22. Σε ποια μπλοκ βρίσκονται αποθηκευμένα εφεδρικά αντίγραφα των block group
 descriptors σε αυτό το σύστημα αρχείων;
+### με mount/
+### hexedit
 23. Τι είναι το block bitmap και τι το inode bitmap; Πού βρίσκονται μέσα στον
 δίσκο;
+### με mount/
+### hexedit
 24. Τι είναι τα inode tables; Πού βρίσκονται μέσα στον δίσκο;
+### με mount/
+### hexedit
 25. Τι πεδία περιέχει το κάθε inode; Πού αποθηκεύεται μέσα στον δίσκο;
+### με mount/
+### hexedit
 26. Πόσα μπλοκ και πόσα inodes περιέχει το κάθε block group σε αυτό το σύστημα αρχείων;
+### με mount/
+### hexedit
 27. Σε ποιο inode αντιστοιχεί το αρχείο /dir2/helloworld σε αυτό το σύστημα
 αρχείων;
+### με mount/
+### hexedit
 28. Σε ποιο block group αντιστοιχεί αυτό το inode;
+### με mount/
+### hexedit
 29. Σε ποιο μπλοκ του δίσκου υπάρχει το inode table που περιέχει το παραπάνω
 inode;
+### με mount/
+### hexedit
 30. Δείξτε όλα τα πεδία αυτού του inode [128 bytes].
+### με mount/
+### hexedit
 31. Σε ποιο μπλοκ είναι αποθηκευμένα τα δεδομένα αυτού του αρχείου;
+### με mount/
+### hexedit
 32. Τι μέγεθος έχει αυτό το αρχείο;
+### με mount/
+### hexedit
 33. Δείξτε τα περιεχόμενα αυτού του αρχείου.
+### με mount/
+### hexedit
 
 **Image 2**
 
