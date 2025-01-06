@@ -314,7 +314,7 @@ struct inode *ext2_iget(struct super_block *sb, unsigned long ino)
 	inode_set_atime(inode, (signed)le32_to_cpu(raw_inode->i_atime), 0);
 	inode_set_ctime(inode, (signed)le32_to_cpu(raw_inode->i_ctime), 0);
 	inode_set_mtime(inode, (signed)le32_to_cpu(raw_inode->i_mtime), 0);
-	ei->i_dtime = le32_to_cpu(raw_inode->i_dtime);
+	// ei->i_dtime = le32_to_cpu(raw_inode->i_dtime); we comment this out because it is set later
 	inode->i_blocks = le32_to_cpu(raw_inode->i_blocks);
 	inode->i_size = le32_to_cpu(raw_inode->i_size);
 	if (i_size_read(inode) < 0) {
