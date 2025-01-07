@@ -789,6 +789,9 @@ inode;
 1. Συνδέστε την εικόνα του δίσκου στην εικονική μηχανή σας, όπως κάνατε και
 για την εικόνα fsdisk1.img και προσαρτήστε τη στον κατάλογο /mnt.
 
+mkdir -p /mnt/fdisk2
+mount /dev/vdc /mnt/fdisk2
+
 2. Χρησιμοποιήστε την εντολή touch για να δημιουργήσετε ένα νέο κενό αρχείο /file1 μέσα στο συγκεκριμένο σύστημα αρχείων. Βεβαιωθείτε ότι η
 εντολή σας αναφέρεται πράγματι στο συγκεκριμένο σύστημα αρχείων [σε
 ποιον κατάλογο το έχετε προσαρτήσει;], κι όχι στον ριζικό κατάλογο του συστήματος.
@@ -815,11 +818,50 @@ strace.
 1. Ποιο εργαλείο στο Linux αναλαμβάνει τον έλεγχο ενός συστήματος αρχείων
 ext2 για αλλοιώσεις;
 
+To fsck.ext2 - e2fsck
+
 2. Ποιοι παράγοντες θα μπορούσαν δυνητικά να οδηγήσουν σε αλλοιώσεις στο
 σύστημα αρχείων; Αναφέρετε ενδεικτικά δέκα πιθανές αλλοιώσεις.
 
+2.1 κατακερματισμός δίσκου
+2.2 Τερματισμός λειτουργείας όσο γίνεται εγγραφή, διάβασμα αρχείων. 
+2.3 Malware και ιοί 
+2.4 Αποσύνδεση δίσκου κατά τη λειτουργεία χωρίς unmount
+2.5 Διακοπή ρεύματος - sudden power loss
+2.6 Bugs στο software λόγω update 
+2.7 Αστοχία hardware - sata controller
+2.8 Γεμάτος Δίσκος
+2.9 Kernel panic που θα προκαλέσει τέλος της λειτουργείας
+2.10 Bad sectors στον δίσκο
+
 3. Τρέξτε το εργαλείο αυτό και επιδιορθώστε το σύστημα αρχείων. Αναφέρετε
-όλες τις αλλοιώσεις που εντοπίσατε, εξαντλητικά.
+
+root@utopia:~# fsck.ext2 /dev/vdd
+e2fsck 1.47.0 (5-Feb-2023)
+fsdisk3.img contains a file system with errors, check forced.
+Pass 1: Checking inodes, blocks, and sizes
+Pass 2: Checking directory structure
+First entry 'BOO' (inode=1717) in directory inode 1717 (/dir-2) should be '.'
+Fix<y>? yes
+Pass 3: Checking directory connectivity
+Pass 4: Checking reference counts
+Inode 3425 ref count is 1, should be 2.  Fix<y>? yes
+Pass 5: Checking group summary information
+Block bitmap differences:  +34
+Fix<y>? yes
+Free blocks count wrong (926431538, counted=19800).
+Fix<y>? yes
+
+fsdisk3.img: ***** FILE SYSTEM WAS MODIFIED *****
+fsdisk3.img: 23/5136 files (0.0% non-contiguous), 680/20480 blocks
+root@utopia:~# fsck.ext2 /dev/vdd
+e2fsck 1.47.0 (5-Feb-2023)
+fsdisk3.img: clean, 23/5136 files, 680/20480 blocks
+root@utopia:~# fsck.ext2 /dev/vdd
+e2fsck 1.47.0 (5-Feb-2023)
+fsdisk3.img: clean, 23/5136 files, 680/20480 blocks
+root@utopia:~#
+
 
 4. Επαναφέρετε το δίσκο στην πρότερή του κατάσταση, από την αρχική εικόνα.  
 Εντοπίστε τις αλλοιώσεις με χρήση της μεθόδου hexedit.
