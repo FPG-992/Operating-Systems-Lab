@@ -39,4 +39,5 @@ Don't forget to unmount the filesystem and remove the module from the kernel if 
 > umount /mnt/ext2lite
 > rmmod ext2-lite.ko
 > rm /tmp/ext2lite.img
+> losetup -d /dev/loop0
 ```
