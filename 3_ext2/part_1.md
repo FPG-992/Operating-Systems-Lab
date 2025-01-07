@@ -1,3 +1,86 @@
+## Part 1
+
+Για τα fields του filesystems είδαμε [αυτό](https://wiki.osdev.org/Ext2). Το οποίο μπορεί να συνιωιστεί στο παρακάτω πίνακα:
+```
+Superblock Fields
+0	3	4	Total number of inodes in file system
+4	7	4	Total number of blocks in file system
+8	11	4	Number of blocks reserved for superuser (see offset 80)
+12	15	4	Total number of unallocated blocks
+16	19	4	Total number of unallocated inodes
+20	23	4	Block number of the block containing the superblock (also the starting block number, NOT always zero.)
+24	27	4	log2 (block size) - 10. (In other words, the number to shift 1,024 to the left by to obtain the block size)
+28	31	4	log2 (fragment size) - 10. (In other words, the number to shift 1,024 to the left by to obtain the fragment size)
+32	35	4	Number of blocks in each block group
+36	39	4	Number of fragments in each block group
+40	43	4	Number of inodes in each block group
+44	47	4	Last mount time (in POSIX time)
+48	51	4	Last written time (in POSIX time)
+52	53	2	Number of times the volume has been mounted since its last consistency check (fsck)
+54	55	2	Number of mounts allowed before a consistency check (fsck) must be done
+56	57	2	Ext2 signature (0xef53), used to help confirm the presence of Ext2 on a volume
+58	59	2	File system state (see below)
+60	61	2	What to do when an error is detected (see below)
+62	63	2	Minor portion of version (combine with Major portion below to construct full version field)
+64	67	4	POSIX time of last consistency check (fsck)
+68	71	4	Interval (in POSIX time) between forced consistency checks (fsck)
+72	75	4	Operating system ID from which the filesystem on this volume was created (see below)
+76	79	4	Major portion of version (combine with Minor portion above to construct full version field)
+80	81	2	User ID that can use reserved blocks
+82	83	2	Group ID that can use reserved blocks
+
+Block Group Descriptor
+0	3	4	Block address of block usage bitmap
+4	7	4	Block address of inode usage bitmap
+8	11	4	Starting block address of inode table
+12	13	2	Number of unallocated blocks in group
+14	15	2	Number of unallocated inodes in group
+16	17	2	Number of directories in group
+18	31	X	(Unused)
+
+Inode Data Structure
+0	1	2	Type and Permissions (see below)
+2	3	2	User ID
+4	7	4	Lower 32 bits of size in bytes
+8	11	4	Last Access Time (in POSIX time)
+12	15	4	Creation Time (in POSIX time)
+16	19	4	Last Modification time (in POSIX time)
+20	23	4	Deletion time (in POSIX time)
+24	25	2	Group ID
+26	27	2	Count of hard links (directory entries) to this inode. When this reaches 0, the data blocks are marked as unallocated.
+28	31	4	Count of disk sectors (not Ext2 blocks) in use by this inode, not counting the actual inode structure nor directory entries linking to the inode.
+32	35	4	Flags (see below)
+36	39	4	Operating System Specific value #1
+40	43	4	Direct Block Pointer 0
+44	47	4	Direct Block Pointer 1
+48	51	4	Direct Block Pointer 2
+52	55	4	Direct Block Pointer 3
+56	59	4	Direct Block Pointer 4
+60	63	4	Direct Block Pointer 5
+64	67	4	Direct Block Pointer 6
+68	71	4	Direct Block Pointer 7
+72	75	4	Direct Block Pointer 8
+76	79	4	Direct Block Pointer 9
+80	83	4	Direct Block Pointer 10
+84	87	4	Direct Block Pointer 11
+88	91	4	Singly Indirect Block Pointer (Points to a block that is a list of block pointers to data)
+92	95	4	Doubly Indirect Block Pointer (Points to a block that is a list of block pointers to Singly Indirect Blocks)
+96	99	4	Triply Indirect Block Pointer (Points to a block that is a list of block pointers to Doubly Indirect Blocks)
+100	103	4	Generation number (Primarily used for NFS)
+104	107	4	In Ext2 version 0, this field is reserved. In version >= 1, Extended attribute block (File ACL).
+108	111	4	In Ext2 version 0, this field is reserved. In version >= 1, Upper 32 bits of file size (if feature bit set) if it's a file, Directory ACL if it's a directory
+112	115	4	Block address of fragment
+116	127	12	Operating System Specific Value #2
+
+Directory Entry
+0	3	4	Inode
+4	5	2	Total size of this entry (Including all subfields)
+6	6	1	Name Length least-significant 8 bits
+7	7	1	Type indicator (only if the feature bit for "directory entries have file type byte" is set, else this is the most-significant 8 bits of the Name Length)
+8	8+N-1	N	Name characters
+```
+
+
 ### Ερώτηση 1.
 Τροποποιήστε κατάλληλα το αρχείο utopia.sh ώστε να προσθέσετε στην εικονική μηχανή utopia έναν επιπλέον δίσκο για την εικόνα fsdisk1.img. Ποια είναι η προσθήκη που κάνατε; Ποια συσκευή στο utopia είναι αυτή που μόλις προσθέσατε;
 
@@ -489,6 +572,7 @@ hexdump -C -s 50333696 -n 32 /dev/vdb # Block 49154 (Offset: 50333696 / 0x300080
 
 Το block bitmap και το inode bitmap βρίσκονται στο block group όπου ανήκουν και είναι αποθηκευμένα σε προκαθορισμένα σημεία. Το block bitmap βρίσκεται μετά το superblock και τους block group descriptors. Το inode bitmap βρίσκεται αμέσως μετά το block bitmap.
 
+
 ### Ερώτηση 24
 Ο Inode Table είναι ένας πίνακας που περιέχει όλα τα inodes ενός block group. Κάθε inode καταλαμβάνει ένα σταθερό μέγεθος (συνήθως 128 ή 256 bytes) και αποθηκεύει πληροφορίες για ένα μόνο αρχείο ή κατάλογο. Κάθε inode περιέχει το μέγεθος του αρχείου, τύπο αρχείου, δικαιώματα πρόσβασης, timestampts, και δείκτες στα μπλοκ δεδομένων που περιέχουν το περιεχόμενο του αρχείου.
 
@@ -557,6 +641,7 @@ root@utopia:~# hexdump -C -s 1024 -n 44 /dev/vdb
 ```
 Οπότε `28 07 00 00`, και σε δεκαδική μορφή: `1832`
 
+
 ### Ερώτηση 27
 #### Προσέγγιση: tools
 Κάνουμε mount το disk στο /mnt/fsdisk1
@@ -620,8 +705,6 @@ $$
 
 Οπότε βγάζουμε ότι το block group θα είναι `5`. Δηλαδή το inode `9161` είναι το 1ο inode στο block group 5.
 
-Now we calculate the inode table location from the given inode in order to access the directories content:
-
 Θα βρούμε το inode table του block group 5:
 ```bash
 root@utopia:~# hexdump -C -s $((2048 + 5*32)) -n 12 /dev/vdb
@@ -649,6 +732,7 @@ root@utopia:~# hexdump -C -s $((247*1024)) -n 64 /dev/vdb
 ```
 Και όπως παρατηρούμε το inode του αρχείου `helloworld` είναι το `ca 23 00 00`.
 Και σε δεκαδική μορφή: `9162`.
+
 
 ### Ερώτηση 28
 #### Προσέγγιση: tools
@@ -770,4 +854,71 @@ root@utopia:~# hexdump -C -s $((40965*1024 + 128)) -n 128 /dev/vdb
 028014e0  00 00 00 00 bc f3 45 a3  00 00 00 00 00 00 00 00  |......E.........|
 028014f0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
 02801500
+```
+
+
+### Ερώτηση 31
+#### Προσέγγιση: tools
+Χρησιμοποιούμε την `filefrag` για να δούμε σε ποια blocks ειναι σκοπρισμένα τα δεδομένα του αρχείου:
+```bash
+root@utopia:~# filefrag -e /mnt/fsdisk1/dir2/helloworld
+Filesystem type is: ef53
+Filesystem cylinder groups approximately 7
+File size of /mnt/fsdisk1/dir2/helloworld is 42 (1 block of 1024 bytes)
+ ext:     logical_offset:        physical_offset: length:   expected: flags:
+   0:        0..       0:       1025..      1025:      1:             last,merged,eof
+/mnt/fsdisk1/dir2/helloworld: 1 extent found
+```
+βλέπουμε ότι βρίσκονται στο block group 1, όπως εξάλλου περιμένουμε.
+
+#### Προσέγγιση: hexedit
+Έχουμε βρει ότι το inode table του αρχείου είναι το δεύτερο inode του 1ου block group.
+Στο ίδιο μλποκ θα είναι αποθηκευμένα τα δεδομένα του:
+```bash
+root@utopia:~# hexdump -C -s $((1025*1024)) -n 128 /dev/vdb
+00100400  57 65 6c 63 6f 6d 65 20  74 6f 20 74 68 65 20 4d  |Welcome to the M|
+00100410  69 67 68 74 79 20 57 6f  72 6c 64 20 6f 66 20 46  |ighty World of F|
+00100420  69 6c 65 73 79 73 74 65  6d 73 00 00 00 00 00 00  |ilesystems......|
+00100430  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+*
+00100480
+```
+
+
+### Ερώτηση 32
+#### Προσέγγιση: tools
+Με την απλή εντολή `ls -la` μπορούμε να βρούμε το μέγεθος του αρχείου:
+```bash
+root@utopia:~# ls -la /mnt/fsdisk1/dir2/helloworld
+-rw-r--r-- 1 root root 42 Dec 12  2023 /mnt/fsdisk1/dir2/helloworld
+```
+Αρα είναι 42 bytes
+
+#### Προσέγγιση: hexedit
+Μέσω hexdump θα βρω το μεγεθος απο το inode table στις θέσεις 4-7:
+```bash
+root@utopia:~# hexdump -C -s $((40965*1024 + 128)) -n 8 /dev/vdb
+02801480  a4 81 00 00 2a 00 00 00                           |....*...|
+02801488
+```
+Άρα είνα `2a 00 00 00`, και σε δεκαδική μορφή: `42`.
+
+
+### Ερώτηση 33
+#### Προσέγγιση: tools
+Θα χρησιμοποιήσω την cat:
+```bash
+root@utopia:~# cat /mnt/fsdisk1/dir2/helloworld
+Welcome to the Mighty World of Filesystemsroot@utopia:~#
+```
+
+#### Προσέγγιση: hexedit
+Όπως έχουμε δει νωρίτερα το block vector που αντιστοιχει στο inode του αρχειο βρισκεται στο block `1025`, οπότε με hexdump:
+```bash
+00100400  57 65 6c 63 6f 6d 65 20  74 6f 20 74 68 65 20 4d  |Welcome to the M|
+00100410  69 67 68 74 79 20 57 6f  72 6c 64 20 6f 66 20 46  |ighty World of F|
+00100420  69 6c 65 73 79 73 74 65  6d 73 00 00 00 00 00 00  |ilesystems......|
+00100430  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+*
+00100480
 ```
