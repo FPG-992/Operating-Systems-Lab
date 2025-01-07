@@ -1,0 +1,1 @@
+cmd_/home/user/shared/Filesystems/ext2-lite-helpcode/Module.symvers :=  sed 's/ko$$/o/'  /home/user/shared/Filesystems/ext2-lite-helpcode/modules.order | scripts/mod/modpost -m      -o /home/user/shared/Filesystems/ext2-lite-helpcode/Module.symvers -e -i Module.symvers -T - 

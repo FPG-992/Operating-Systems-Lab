@@ -1,0 +1,1 @@
+cmd_/home/user/shared/Filesystems/ext2-lite-helpcode/ext2-lite.ko := ld -r -m elf_x86_64 -z noexecstack --no-warn-rwx-segments --build-id=sha1  -T arch/x86/module.lds -o /home/user/shared/Filesystems/ext2-lite-helpcode/ext2-lite.ko /home/user/shared/Filesystems/ext2-lite-helpcode/ext2-lite.o /home/user/shared/Filesystems/ext2-lite-helpcode/ext2-lite.mod.o;  true

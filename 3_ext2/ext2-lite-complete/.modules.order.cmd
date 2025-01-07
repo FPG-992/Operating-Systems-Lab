@@ -1,0 +1,1 @@
+cmd_/home/user/shared/Filesystems/ext2-lite-helpcode/modules.order := {   echo /home/user/shared/Filesystems/ext2-lite-helpcode/ext2-lite.ko; :; } > /home/user/shared/Filesystems/ext2-lite-helpcode/modules.order
