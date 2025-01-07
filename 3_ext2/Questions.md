@@ -815,6 +815,11 @@ strace.
 
 **Image 3**
 
+root@utopia:~# sha256sum /dev/vdd
+982902777d0e66e14379f642365b4fa71a5473348d9af2453e80dbea135bb50d  /dev/vdd
+982902777d0e66e14379f642365b4fa71a5473348d9af2453e80dbea135bb50d  fsdisk3-982902777.img
+It is a match
+
 1. Ποιο εργαλείο στο Linux αναλαμβάνει τον έλεγχο ενός συστήματος αρχείων
 ext2 για αλλοιώσεις;
 
@@ -835,6 +840,18 @@ To fsck.ext2 - e2fsck
 2.10 Bad sectors στον δίσκο
 
 3. Τρέξτε το εργαλείο αυτό και επιδιορθώστε το σύστημα αρχείων. Αναφέρετε
+όλες τις αλλοιώσεις που εντοπίσατε, εξαντλητικά.
+
+3.1
+First entry 'BOO' (inode=1717) in directory inode 1717 (/dir-2) should be '.'
+3.2
+Inode 3425 ref count is 1, should be 2.  Fix<y>? yes
+3.3
+Block bitmap differences:  +34
+Fix<y>? yes
+3.4
+Free blocks count wrong (926431538, counted=19800).
+Fix<y>? yes
 
 root@utopia:~# fsck.ext2 /dev/vdd
 e2fsck 1.47.0 (5-Feb-2023)
@@ -862,9 +879,10 @@ e2fsck 1.47.0 (5-Feb-2023)
 fsdisk3.img: clean, 23/5136 files, 680/20480 blocks
 root@utopia:~#
 
-
 4. Επαναφέρετε το δίσκο στην πρότερή του κατάσταση, από την αρχική εικόνα.  
 Εντοπίστε τις αλλοιώσεις με χρήση της μεθόδου hexedit.
+
+
 
 5. Επιδιορθώστε κάθε αλλοίωση ξεχωριστά με χρήση της μεθόδου hexedit. Για
 κάθε μία από τις αλλοιώσεις που επιδιορθώνετε, τρέξτε το εργαλείο fsck με
