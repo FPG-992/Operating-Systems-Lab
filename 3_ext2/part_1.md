@@ -713,3 +713,26 @@ $$
 $$
 
 Δηλαδή στο 1ο block group.
+
+
+### Ερώτηση 29
+#### Προσέγγιση: tools
+Κάθε block group έχει το δικό του inode table. Βρήκαμε ότι το παραπάνω inode βρίσκεται στο block group 1,
+οπότε θα κοιτάξω με την εντολή `dumpe2fs` σε ποιο μπλοκ του δίσκου υπάρχει το αντίστοιχο inode table:
+```bash
+root@utopia:~# dumpe2fs /dev/vdb
+...
+Group 1: (Blocks 8193-16384)
+  ...
+  Inode table at 8197-8425 (+4)
+...
+```
+
+#### Προσέγγιση: hexedit
+Μέσα από το block descriptor του block group 1 μπορώ να βρω την θέση που αρχίζει το inode table:
+```bash
+root@utopia:~# hexdump -C -s $((2048 + 32)) -n 12 /dev/vdb
+00000820  03 20 00 00 04 20 00 00  05 20 00 00              |. ... ... ..|
+0000082c
+```
+Οπότε έχουμε `05 20 00 00`, και σε δεκαδική μορφή: `8197`.
