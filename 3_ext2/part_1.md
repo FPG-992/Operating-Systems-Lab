@@ -571,15 +571,24 @@ root@utopia:~# ls -i /mnt/fsdisk1/dir2/helloworld
 ```
 
 #### Προσέγγιση: hexedit
+Για να βρούμε το inode number του αρχείου, πρέπει να βρούμε πρώτα το inode number του directory.
+Οπότε θα εντοπίσουμε το inode table του root και με βάση αυτό θα προχωρήσουμε.
+
+Το inode table μπορύμε να το βρούμε (το offset του) μέσα στο block group descriptor, το οποίο βρίσκεται αμέσως μετά από το superblock.
+
 Έχουμε ότι block_size=1024 bytes.
 
-The inode table for the first block group is located using the block group descriptor table, which follows the superblock.
-```bash (find inode table offset)
+Οπότε διαβάζω το block descriptor (η αρχή του inode table εντοπίζεται στα bytes 9-12):
+```bash
 root@utopia:~# hexdump -C -s 2048 -n 12 /dev/vdb
 00000800  03 00 00 00 04 00 00 00  05 00 00 00              |............|
 0000080c
 ```
-`05 00 00 00` = `5` * block_size = `5120`: inode table (inode #2: 5120 + 128=5248)
+Οπότε έχουμε `05 00 00 00`, και σε δεκαδική μορφή `5`.
+Το πολλαπλασιάζουμε με το block_size και παίρνουμε την διεύθυνση του inode table του root, δηλαδή `5120`.
+Ύστερα θέλουμε το inode #2, οπότε θα προσθέσουμε `128` (inode size). Συνεπώς έχουμε `5248`
+
+Τώρα θα εντοπίσουμε το block pointer 0 του inode table, ο οποίος βρίσκεται στα bytes 40-43
 ```bash
 root@utopia:~# hexdump -C -s 5248 -n 44 /dev/vdb
 00001480  ed 41 00 00 00 04 00 00  98 60 7c 67 e4 7a 78 65  |.A.......`|g.zxe|
@@ -587,7 +596,8 @@ root@utopia:~# hexdump -C -s 5248 -n 44 /dev/vdb
 000014a0  00 00 00 00 02 00 00 00  ea 00 00 00              |............|
 000014ac
 ```
-`ea 00 00 00 ` = `234` * block_size = 239616 # pointer of inode #2 offset
+Και έχουμε `ea 00 00 00`, και σε δεκαδική μορφή `234`.
+Οπότε πολλαπλασιάζουμε με το block_size και παίρνουμε το offset για το περιεχόμενο του inode #2: `239616`
 ```bash
 root@utopia:~# hexdump -C -s 239616 -n 1024 /dev/vdb
 0003a800  02 00 00 00 0c 00 01 00  2e 00 00 00 02 00 00 00  |................|
@@ -599,18 +609,43 @@ root@utopia:~# hexdump -C -s 239616 -n 1024 /dev/vdb
 *
 0003ac00
 ```
-So the inode of the dir2 is `c9 23 00 00`=`9161`
-block group = (9161 - 1)/Inodes per Block Group = 9160/1832=5
+Από τον πίνακα αυτόν βλέπουμε ότι το inode του dir2 είναι το `c9 23 00 00`, δηλαδή σε δεκαδική μορφή `9161`.
+
+Έχοντας πλέον το inode number του /dir2 θα βρούμε σε ποιο block group βρίσκεται το αντίστοιχο inode table για να αποκτήσουμε πρόσβαση στα περιέχομαι του directory:
+Θα χρησιμοποιήσουμε τον ακόλουθο τύπο:
+
+$$
+\text{Block Group} = \cfrac{\text{Inode_Number} - 1}{\text{Inodes per Group}}
+$$
+
+Οπότε βγάζουμε ότι το block group θα είναι `5`. Δηλαδή το inode `9161` είναι το 1ο inode στο block group 5.
+
+Now we calculate the inode table location from the given inode in order to access the directories content:
+
+Θα βρούμε το inode table του block group 5:
 ```bash
-root@utopia:~# hexdump -C -s $((2048 + (5 * 32))) -n 12 /dev/vdb
+root@utopia:~# hexdump -C -s $((2048 + 5*32)) -n 12 /dev/vdb
 000008a0  03 a0 00 00 04 a0 00 00  05 a0 00 00              |............|
 000008ac
 ```
-`05 a0 00 00` = `2565`​ * block_size = `2626560` inode table of dir2
+Το οποίο είναι το `05 a0 00 00`, δηλαδή το `40965`. Οπότε θα διαβάσουμε το 1ο inode:
 ```bash
-root@utopia:~# hexdump -C -s 2626560 -n 44 /dev/vdb
-00281400  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
-*
-00281420  00 00 00 00 00 00 00 00  00 00 00 00              |............|
-0028142c
+root@utopia:~# hexdump -C -s $((40965*1024)) -n 44 /dev/vdb
+02801400  ed 41 00 00 00 04 00 00  9c 60 7c 67 e4 7a 78 65  |.A.......`|g.zxe|
+02801410  e4 7a 78 65 00 00 00 00  00 00 02 00 02 00 00 00  |.zxe............|
+02801420  00 00 00 00 02 00 00 00  f7 00 00 00              |............|
+0280142c
 ```
+Το οποίο είναι το `f7 00 00 00`, δηλαδή `247`.
+
+Οπότε βρήκαμε το block για το directory entry του /dir2:
+```bash
+root@utopia:~# hexdump -C -s $((247*1024)) -n 64 /dev/vdb
+0003dc00  c9 23 00 00 0c 00 01 00  2e 00 00 00 02 00 00 00  |.#..............|
+0003dc10  0c 00 02 00 2e 2e 00 00  ca 23 00 00 e8 03 0a 00  |.........#......|
+0003dc20  68 65 6c 6c 6f 77 6f 72  6c 64 00 00 00 00 00 00  |helloworld......|
+0003dc30  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+0003dc40
+```
+Και όπως παρατηρούμε το inode του αρχείου `helloworld` είναι το `ca 23 00 00`.
+Και σε δεκαδική μορφή: `9162`.
