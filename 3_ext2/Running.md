@@ -38,6 +38,6 @@ Don't forget to unmount the filesystem and remove the module from the kernel if 
 ```bash
 > umount /mnt/ext2lite
 > losetup -d /dev/loop0
-> rmmod ext2-lite.ko
 > rm /tmp/ext2lite.img
+> rmmod ext2-lite.ko
 ```
