@@ -488,3 +488,129 @@ hexdump -C -s 50333696 -n 32 /dev/vdb # Block 49154 (Offset: 50333696 / 0x300080
 Το inode bitmap είναι ένας χάρτης που παρακολουθεί την κατάσταση όλων των inodes μέσα σε ένα block group. Κάθε bit στο inode bitmap αντιστοιχεί σε ένα inode του block group και είναι 1 αν το inode είναι κατειλημμένο (χρησιμοποιείται από ένα αρχείο ή κατάλογο), αλλίως 0. Όταν δημιουργείται ένα νέο αρχείο ή κατάλογος, το σύστημα βρίσκει ένα διαθέσιμο inode μέσω του inode bitmap.
 
 Το block bitmap και το inode bitmap βρίσκονται στο block group όπου ανήκουν και είναι αποθηκευμένα σε προκαθορισμένα σημεία. Το block bitmap βρίσκεται μετά το superblock και τους block group descriptors. Το inode bitmap βρίσκεται αμέσως μετά το block bitmap.
+
+### Ερώτηση 24
+Ο Inode Table είναι ένας πίνακας που περιέχει όλα τα inodes ενός block group. Κάθε inode καταλαμβάνει ένα σταθερό μέγεθος (συνήθως 128 ή 256 bytes) και αποθηκεύει πληροφορίες για ένα μόνο αρχείο ή κατάλογο. Κάθε inode περιέχει το μέγεθος του αρχείου, τύπο αρχείου, δικαιώματα πρόσβασης, timestampts, και δείκτες στα μπλοκ δεδομένων που περιέχουν το περιεχόμενο του αρχείου.
+
+Τα Inode Tables βρίσκονται σε κάθε block group του συστήματος αρχείων. Η θέση τους είναι σταθερή και ορίζεται μετά από τα bytes του Inode Bitmap.
+
+
+### Ερώτηση 25
+Ένα inode (Index Node) στο σύστημα αρχείων ext2 είναι μια δομή δεδομένων που περιέχει τα μεταδεδομένα για ένα αρχείο ή κατάλογο. Το κάθε inode αντιπροσωπεύει ένα αρχείο ή κατάλογο και αποθηκεύει πληροφορίες για τη διαχείριση και την οργάνωση των δεδομένων στο σύστημα αρχείων. Τα inodes αποθηκεύονται στους πίνακες inodes (inode tables), οι οποίοι βρίσκονται μέσα σε κάθε block group.
+
+Η δομή ενός inode μπορεί να παρουσιαστεί ως εξής:
+```c
+struct ext2_inode {
+    uint16_t i_mode;        // Τύπος αρχείου και δικαιώματα
+    uint16_t i_uid;         // User ID (ιδιοκτήτης)
+    uint32_t i_size;        // Μέγεθος αρχείου σε bytes
+    uint32_t i_atime;       // Χρόνος τελευταίας πρόσβασης
+    uint32_t i_ctime;       // Χρόνος τελευταίας αλλαγής του inode
+    uint32_t i_mtime;       // Χρόνος τελευταίας τροποποίησης
+    uint32_t i_dtime;       // Χρόνος διαγραφής (αν διαγραφεί)
+    uint16_t i_gid;         // Group ID (ιδιοκτήτης)
+    uint16_t i_links_count; // Αριθμός σκληρών συνδέσμων
+    uint32_t i_blocks;      // Αριθμός μπλοκ που καταλαμβάνει το αρχείο
+    uint32_t i_flags;       // Σημαίες για χαρακτηριστικά αρχείου
+    uint32_t i_direct[12];  // Άμεσοι δείκτες
+    uint32_t i_indirect;    // Single indirect pointer
+    uint32_t i_double_indirect; // Double indirect pointer
+    uint32_t i_triple_indirect; // Triple indirect pointer
+    uint32_t i_generation;  // Κωδικός γενιάς αρχείου
+    uint32_t i_file_acl;    // Access Control List (ACL)
+    uint32_t i_dir_acl;     // Directory ACL
+    uint32_t i_faddr;       // Fragment address
+    uint8_t i_osd1[12];     // Κρατημένα πεδία για λειτουργικό σύστημα
+};
+```
+
+
+### Ερώτηση 26
+#### Προσέγγιση: tools
+Με χρήση `dumpe2fs` βλέπουμε ότι:
+```bash
+root@utopia:~# dumpe2fs /dev/vdb
+...
+Blocks per group:         8192
+...
+Inodes per group:         1832
+...
+```
+
+#### Προσέγγιση: hexedit
+Έχουμε ότι _Number of blocks in each block group_ αφορά τα bytes 32-35, και για τα inodes τα 40-43:
+```bash
+root@utopia:~# hexdump -C -s 1024 -n 36 /dev/vdb
+00000400  18 32 00 00 00 c8 00 00  00 0a 00 00 90 c1 00 00  |.2..............|
+00000410  0a 32 00 00 01 00 00 00  00 00 00 00 00 00 00 00  |.2..............|
+00000420  00 20 00 00                                       |. ..|
+00000424
+```
+Οπότε `00 20 00 00`, και σε δεκαδική μορφή: `8192`
+
+```bash
+root@utopia:~# hexdump -C -s 1024 -n 44 /dev/vdb
+00000400  18 32 00 00 00 c8 00 00  00 0a 00 00 90 c1 00 00  |.2..............|
+00000410  0a 32 00 00 01 00 00 00  00 00 00 00 00 00 00 00  |.2..............|
+00000420  00 20 00 00 00 20 00 00  28 07 00 00              |. ... ..(...|
+0000042c
+```
+Οπότε `28 07 00 00`, και σε δεκαδική μορφή: `1832`
+
+### Ερώτηση 27
+#### Προσέγγιση: tools
+Κάνουμε mount το disk στο /mnt/fsdisk1
+```bash
+mkdir -p /mnt/fsdisk1
+mount /dev/vdb /mnt/fsdisk1
+```
+Χρησιμοποιούμε την εντολή `ls -i`:
+```bash
+root@utopia:~# ls -i /mnt/fsdisk1/dir2/helloworld
+9162 /mnt/fsdisk1/dir2/helloworld
+```
+
+#### Προσέγγιση: hexedit
+Έχουμε ότι block_size=1024 bytes.
+
+The inode table for the first block group is located using the block group descriptor table, which follows the superblock.
+```bash (find inode table offset)
+root@utopia:~# hexdump -C -s 2048 -n 12 /dev/vdb
+00000800  03 00 00 00 04 00 00 00  05 00 00 00              |............|
+0000080c
+```
+`05 00 00 00` = `5` * block_size = `5120`: inode table (inode #2: 5120 + 128=5248)
+```bash
+root@utopia:~# hexdump -C -s 5248 -n 44 /dev/vdb
+00001480  ed 41 00 00 00 04 00 00  98 60 7c 67 e4 7a 78 65  |.A.......`|g.zxe|
+00001490  e4 7a 78 65 00 00 00 00  00 00 05 00 02 00 00 00  |.zxe............|
+000014a0  00 00 00 00 02 00 00 00  ea 00 00 00              |............|
+000014ac
+```
+`ea 00 00 00 ` = `234` * block_size = 239616 # pointer of inode #2 offset
+```bash
+root@utopia:~# hexdump -C -s 239616 -n 1024 /dev/vdb
+0003a800  02 00 00 00 0c 00 01 00  2e 00 00 00 02 00 00 00  |................|
+0003a810  0c 00 02 00 2e 2e 00 00  0b 00 00 00 14 00 0a 00  |................|
+0003a820  6c 6f 73 74 2b 66 6f 75  6e 64 00 00 29 07 00 00  |lost+found..)...|
+0003a830  0c 00 04 00 64 69 72 31  c9 23 00 00 c8 03 04 00  |....dir1.#......|
+0003a840  64 69 72 32 00 00 00 00  00 00 00 00 00 00 00 00  |dir2............|
+0003a850  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+*
+0003ac00
+```
+So the inode of the dir2 is `c9 23 00 00`=`9161`
+block group = (9161 - 1)/Inodes per Block Group = 9160/1832=5
+```bash
+root@utopia:~# hexdump -C -s $((2048 + (5 * 32))) -n 12 /dev/vdb
+000008a0  03 a0 00 00 04 a0 00 00  05 a0 00 00              |............|
+000008ac
+```
+`05 a0 00 00` = `2565`​ * block_size = `2626560` inode table of dir2
+```bash
+root@utopia:~# hexdump -C -s 2626560 -n 44 /dev/vdb
+00281400  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+*
+00281420  00 00 00 00 00 00 00 00  00 00 00 00              |............|
+0028142c
+```
