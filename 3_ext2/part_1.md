@@ -1,4 +1,4 @@
-## Part 1
+# Part 1
 
 Για τα fields του filesystems είδαμε [αυτό](https://wiki.osdev.org/Ext2). Το οποίο μπορεί να συνιωιστεί στο παρακάτω πίνακα:
 ```
@@ -81,6 +81,7 @@ Directory Entry
 ```
 
 
+## Εικόνα fsdisk1.img
 ### Ερώτηση 1.
 Τροποποιήστε κατάλληλα το αρχείο utopia.sh ώστε να προσθέσετε στην εικονική μηχανή utopia έναν επιπλέον δίσκο για την εικόνα fsdisk1.img. Ποια είναι η προσθήκη που κάνατε; Ποια συσκευή στο utopia είναι αυτή που μόλις προσθέσατε;
 
@@ -921,4 +922,153 @@ Welcome to the Mighty World of Filesystemsroot@utopia:~#
 00100430  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
 *
 00100480
+```
+
+## Εικόνα fsdisk2.img
+### Ερώτηση 1
+Βλέπουμε ότι η εικόνα αντιστοιχεί στην συσκευή `/dev/vdc`:
+```bash
+root@utopia:~# hexdump -s 1024 -n 1024 -C /dev/vdc
+00000400  10 14 00 00 00 50 00 00  00 00 00 00 63 4c 00 00  |.....P......cL..|
+00000410  00 00 00 00 01 00 00 00  00 00 00 00 00 00 00 00  |................|
+00000420  00 20 00 00 00 20 00 00  b0 06 00 00 e5 7a 78 65  |. ... .......zxe|
+00000430  e9 7a 78 65 01 00 ff ff  53 ef 01 00 01 00 00 00  |.zxe....S.......|
+00000440  e5 7a 78 65 00 00 00 00  00 00 00 00 01 00 00 00  |.zxe............|
+00000450  00 00 00 00 0b 00 00 00  80 00 00 00 00 00 00 00  |................|
+00000460  00 00 00 00 00 00 00 00  d1 26 6a d1 da e1 42 75  |.........&j...Bu|
+00000470  81 36 a2 9a 4d fc 9d 1f  66 73 64 69 73 6b 32 2e  |.6..M...fsdisk2.|
+00000480  69 6d 67 00 00 00 00 00  2f 63 73 6c 61 62 2d 62  |img...../cslab-b|
+00000490  75 6e 6b 65 72 00 00 00  00 00 00 00 00 00 00 00  |unker...........|
+000004a0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+*
+000004e0  00 00 00 00 00 00 00 00  00 00 00 00 e0 1a 14 38  |...............8|
+000004f0  a9 b7 42 18 b8 92 e0 e1  ae 23 d8 91 01 00 00 00  |..B......#......|
+00000500  0c 00 00 00 00 00 00 00  e5 7a 78 65 00 00 00 00  |.........zxe....|
+00000510  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+*
+00000560  01 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+00000570  00 00 00 00 00 00 00 00  93 03 00 00 00 00 00 00  |................|
+00000580  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+*
+00000800
+```
+
+Οπότε κάνω mount την συσκευή αυτή στο `/mnt/fsdisk2`
+```bash
+mkdir -p /mnt/fsdisk2
+mount /dev/vdb /mnt/fsdisk2
+```
+
+### Ερώτηση 2
+Εκτελούμε την ακόλουθη εντολή:
+```bash
+root@utopia:~# touch /mnt/fsdisk2/test_file
+touch: cannot touch '/mnt/fsdisk2/test_file': No space left on device
+```
+
+### Ερώτηση 3
+Από ότι βλέπουμε το αρχείο δεν δημιθουργήθηκε, μιας και το filesystem φαινεται να ειναι γεματο.
+
+### Ερώτηση 4
+Παρατηρώντας το `strace`, έχουμε:
+```bash
+root@utopia:~# strace touch /mnt/fsdisk2/test_file
+...
+openat(AT_FDCWD, "/mnt/fsdisk2/test_file", O_WRONLY|O_CREAT|O_NOCTTY|O_NONBLOCK, 0666) = -1 ENOSPC (No space left on device)
+...
+```
+Δηλαδή η `touch` χρησιμοποιεί την [openat](https://linux.die.net/man/2/openat) (Given a pathname for a file, open() returns a file descriptor, a small, nonnegative integer for use in subsequent system calls (read(2), write(2), lseek(2), fcntl(2), etc.)). Όμως το δίκσος είναι γεμάτος και δεν έχει διαθέσιμο χώρο για να επιστρέψει έναν file discriptor.
+
+
+### Ερώτηση 5
+#### Προσέγγιση: tools
+Χρησιμοποιούμε την `find`, οπου από το [man page](https://linux.die.net/man/1/find) έχουμε: 
+_find searches the directory tree rooted at each given file name by evaluating the given expression from left to right, according to the rules of precedence (see section OPERATORS), until the outcome is known (the left hand side is false for and operations, true for or), at which point find moves on to the next file name._
+
+Για να βρούμε το σύνολο των αρχείων:
+```bash
+root@utopia:~# find /mnt/fsdisk2 -type f | wc -l
+4868
+```
+Και για τους καταλόγους:
+```bash
+root@utopia:~# find /mnt/fsdisk2 -type d | wc -l
+259
+```
+
+#### Προσέγγιση: hexedit
+Επαληθεύουμε ότι το device είναι γεμάτο:
+```bash
+root@utopia:~# hexdump -C -s 1024 -n 20 /dev/vdc
+00000400  10 14 00 00 00 50 00 00  00 00 00 00 63 4c 00 00  |.....P......cL..|
+00000410  00 00 00 00                                       |....|
+00000414
+```
+Και για να βρω τα συνολικά inodes του συστήματος θα κοιτάξω στα bytes 0-3 του superblock:
+```bash
+root@utopia:~# hexdump -C -s 1024 -n 4 /dev/vdc
+00000400  10 14 00 00                                       |....|
+00000404
+```
+Άρα έχει συνολικά `10 14 00 00` inodes, και σε δεκαδική μορφή: `5136`
+
+
+### Ερώτηση 6: Πόσο χώρο καταλαμβάνουν τα δεδομένα και τα μεταδεδομένα του συγκεκριμένου συστήματος αρχείων;
+#### Προσέγγιση: tools
+Χρησιμοποιούμε την εντολή `df` ([man page](https://linux.die.net/man/1/df): _displays the amount of disk space available on the file system containing each file name argument_)
+```bash
+root@utopia:~# df -h /mnt/fsdisk2
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/vdc         20M  270K   20M   2% /mnt/fsdisk2
+```
+Οπότε έχουμε 270 kilobytes
+
+#### Προσέγγιση: hexedit
+???
+
+
+### Ερώτηση 7: Πόσο είναι το μέγεθος του συγκεκριμένου συστήματος αρχείων;
+#### Προσέγγιση: tools
+Από την `df` βλέπουμε ότι είναι 20 mega bytes.
+
+#### Προσέγγιση: hexedit
+???
+
+
+### Ερώτηση 8: Πόσα μπλοκ είναι διαθέσιμα/ελεύθερα στο συγκεκριμένο σύστημα αρχείων; Ισοδύναμα, έχει ελεύθερο χώρο το συγκεκριμένο σύστημα αρχείων;
+#### Προσέγγιση: tools
+Χρησιμοποιούμε την εντολή `dumpe2fs`:
+```bash
+root@utopia:~# dumpe2fs /dev/vdc
+...
+Free blocks:              19555
+...
+```
+
+#### Προσέγγιση: hexedit
+Για να βρω τα unallocated block θα κοιτάξω στις θέσεις 12-15 του hexdump:
+```bash
+root@utopia:~# hexdump -C -s 1024 -n 16 /dev/vdc
+00000400  10 14 00 00 00 50 00 00  00 00 00 00 63 4c 00 00  |.....P......cL..|
+00000410
+```
+Οπότε έχουμε `63 4c 00 00`, που σε δεκαδική μορφή: `19555`
+
+
+### Ερώτηση 9: Αφού υπάρχουν διαθέσιμα μπλοκ, τι σας αποτρέπει από το να δημιουργήσετε νέο αρχείο;
+Κάθε αρχείο ή κατάλογος σε ένα σύστημα αρχείων ext2 απαιτεί ένα inode. Αν τα inodes έχουν εξαντληθεί.
+
+#### Προσέγγιση: tools
+```bash
+root@utopia:~# df -i /mnt/fsdisk2
+Filesystem     Inodes IUsed IFree IUse% Mounted on
+/dev/vdc         5136  5136     0  100% /mnt/fsdisk2
+```
+
+#### Προσέγγιση: hexedit
+```bash
+root@utopia:~# hexdump -C -s 1024 -n 20 /dev/vdc
+00000400  10 14 00 00 00 50 00 00  00 00 00 00 63 4c 00 00  |.....P......cL..|
+00000410  00 00 00 00                                       |....|
+00000414
 ```
