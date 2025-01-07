@@ -649,3 +649,67 @@ root@utopia:~# hexdump -C -s $((247*1024)) -n 64 /dev/vdb
 ```
 Και όπως παρατηρούμε το inode του αρχείου `helloworld` είναι το `ca 23 00 00`.
 Και σε δεκαδική μορφή: `9162`.
+
+### Ερώτηση 28
+#### Προσέγγιση: tools
+Από το [man page](https://linux.die.net/man/8/debugfs) της `debugfs`, έχουμε: _The debugfs program is an interactive file system debugger. It can be used to examine and change the state of an ext2, ext3, or ext4 file system._
+
+Οπότε εφαρμόζοντάς την έχουμε:
+```bash
+root@utopia:~# debugfs /dev/vdb
+debugfs:
+```
+Θα δούμε ότι το αρχείο πράγματι υπάρχει:
+```bash
+debugfs:  stat <9162>
+Inode: 9162   Type: regular    Mode:  0644   Flags: 0x0
+Generation: 2739270588    Version: 0x00000001
+User:     0   Group:     0   Size: 42
+File ACL: 0
+Links: 1   Blockcount: 2
+Fragment:  Address: 0    Number: 0    Size: 0
+ctime: 0x65787ae4 -- Tue Dec 12 15:23:16 2023
+atime: 0x677d3407 -- Tue Jan  7 14:02:47 2025
+mtime: 0x65787ae4 -- Tue Dec 12 15:23:16 2023
+BLOCKS:
+(0):1025
+TOTAL: 1
+```
+Και για να δούμε το block group:
+```bash
+...
+debugfs:  show_super_stats
+ Group  0: block bitmap at 3, inode bitmap at 4, inode table at 5
+           7944 free blocks, 1821 free inodes, 2 used directories
+ Group  1: block bitmap at 8195, inode bitmap at 8196, inode table at 8197
+           7958 free blocks, 1831 free inodes, 1 used directory
+ Group  2: block bitmap at 16387, inode bitmap at 16388, inode table at 16389
+           7959 free blocks, 1832 free inodes, 0 used directories
+ Group  3: block bitmap at 24579, inode bitmap at 24580, inode table at 24581
+           7959 free blocks, 1832 free inodes, 0 used directories
+ Group  4: block bitmap at 32771, inode bitmap at 32772, inode table at 32773
+           7959 free blocks, 1832 free inodes, 0 used directories
+ Group  5: block bitmap at 40963, inode bitmap at 40964, inode table at 40965
+           7959 free blocks, 1830 free inodes, 1 used directory
+ Group  6: block bitmap at 49155, inode bitmap at 49156, inode table at 49157
+           1814 free blocks, 1832 free inodes, 0 used directories
+...
+```
+Δηλαδή το inode 9162 βρίσκεται ανάμεσα στα inode tables των Group 1, και Group 2. Οπότε ανοίκει στο group 1.
+
+#### Προσέγγιση: hexedit
+Το inode 9162 είναι το δεύτερο inode του block group 5, οπότε διαβάζοντας το (inode table of bg 5):
+```bash
+root@utopia:~# hexdump -C -s $((40965*1024 + 128)) -n 44 /dev/vdb
+02801480  a4 81 00 00 2a 00 00 00  07 34 7d 67 e4 7a 78 65  |....*....4}g.zxe|
+02801490  e4 7a 78 65 00 00 00 00  00 00 01 00 02 00 00 00  |.zxe............|
+028014a0  00 00 00 00 01 00 00 00  01 04 00 00              |............|
+028014ac
+```
+Εχουμε `01 04 00 00`, σε δεκαδική `1025`, και για να βρούμε το block group, έχουμε:
+
+$$
+\text{Block Group} = \cfrac{\text{Inode Number} - 1}{\text{Inodes per Group}}
+$$
+
+Δηλαδή στο 1ο block group.
