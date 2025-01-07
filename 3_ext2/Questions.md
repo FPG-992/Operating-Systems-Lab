@@ -882,6 +882,63 @@ root@utopia:~#
 4. Επαναφέρετε το δίσκο στην πρότερή του κατάσταση, από την αρχική εικόνα.  
 Εντοπίστε τις αλλοιώσεις με χρήση της μεθόδου hexedit.
 
+Θα διαβάσουμε αρχικά τιμές από το superblock.
+
+Offset (bytes)	Size (bytes)	Description
+0	4	s_inodes_count = 10 14 00 00 = 5144
+4	4	s_blocks_count = 00 50 00 00 = 20480
+8	4	s_r_blocks_count = 00 04 00 00 = 1024
+12	4	s_free_blocks_count = 32 39 38 37 =!!!!!!!!!!!!! 926431538 !!!!!!!!!!!!!!
+16	4	s_free_inodes_count = f9 13 00 00 = 5113
+20	4	s_first_data_block = 01 00 00 00 = 1
+24	4	s_log_block_size = 0 = 1024 << 0 = 1024 bytes 
+28	4	s_log_frag_size = 0 = 1024<<0 = 1024 bytes
+32	4	s_blocks_per_group = 00 20 00 00 = 8192 blocks
+36	4	s_frags_per_group = 00 20 00 00 = 8192 blocks
+40	4	s_inodes_per_group = b0 06 00 00 = 1712
+44	4	s_mtime = e9 7a 78 65 = posix time be -> decimal ....
+48	4	s_wtime = ea 7a 78 65 = same
+52	2	s_mnt_count = 01 00 
+54	2	s_max_mnt_count = ff ff
+56	2	s_magic = 53 ef = ext2 magic number (identifier) in little endian
+58	2	s_state = 01 00 = 0x0001 = clean
+60	2	s_errors = 01 00 = continue 
+62	2	s_minor_rev_level = 00 00
+64	4	s_lastcheck = e9 7a 78 65 
+68	4	s_checkinterval = 00 00 00 00  
+72	4	s_creator_os = 00 00 00 00 = LINUX X:)
+76	4	s_rev_level = 01 00 00 00
+80	2	s_def_resuid = 0
+82	2	s_def_resgid = 0
+-- EXT2_DYNAMIC_REV Specific --
+84	4	s_first_ino = 0b 00 00 00 = 11
+88	2	s_inode_size = 80 00 = 128 
+90	2	s_block_group_nr = 00 00 = 0
+92	4	s_feature_compat = 00 00 00 00
+96	4	s_feature_incompat = 0
+100	4	s_feature_ro_compat = 0
+104	16	s_uuid = 19 03 21 43 52 ce 49 17 8e c5 99 1c 89 ee 42 1b
+120	16	s_volume_name = 66 73 64 69 73 6b 33 2e 69 6d 67 00 00 00 00 00
+136	64	s_last_mounted
+200	4	s_algo_bitmap
+-- Performance Hints --
+204	1	s_prealloc_blocks
+205	1	s_prealloc_dir_blocks
+206	2	(alignment)
+-- Journaling Support --
+208	16	s_journal_uuid
+224	4	s_journal_inum
+228	4	s_journal_dev
+232	4	s_last_orphan
+-- Directory Indexing Support --
+236	4 x 4	s_hash_seed
+252	1	s_def_hash_version
+253	3	padding - reserved for future expansion
+-- Other options --
+256	4	s_default_mount_options
+260	4	s_first_meta_bg
+
+
 
 
 5. Επιδιορθώστε κάθε αλλοίωση ξεχωριστά με χρήση της μεθόδου hexedit. Για
