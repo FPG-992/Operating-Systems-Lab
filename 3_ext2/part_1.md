@@ -615,7 +615,7 @@ root@utopia:~# hexdump -C -s 239616 -n 1024 /dev/vdb
 Θα χρησιμοποιήσουμε τον ακόλουθο τύπο:
 
 $$
-\text{Block Group} = \cfrac{\text{Inode_Number} - 1}{\text{Inodes per Group}}
+\text{Block Group} = \cfrac{\text{Inode Number} - 1}{\text{Inodes per Group}}
 $$
 
 Οπότε βγάζουμε ότι το block group θα είναι `5`. Δηλαδή το inode `9161` είναι το 1ο inode στο block group 5.
