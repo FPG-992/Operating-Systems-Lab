@@ -33,3 +33,9 @@ Format that loop device
 ```
 
 After that you can do everything you wish inside `/mnt/ext2lite` (read, wrtie, create files, direcoties, etc.)!
+
+Don't forget to unmount the filesystem and remove the module from the kernel if you don't want to use it:
+```bash
+> umount /mnt/ext2lite
+> rmmod ext2-lite.ko
+```
