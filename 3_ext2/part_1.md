@@ -1168,7 +1168,7 @@ Total size = 657.408 + 942.7 = 1600.1KB = 1.52587891 mebibytes = 1.6 megabytes
 #### Προσέγγιση: hexedit
 
 Block_Count * Block_size = 20480 * 1024 =
-20971520 Bytes = 20971.52 KB = 20.971519999999998 MB
+20971520 Bytes = 20971.52 KB = 20MB MB
 
 ---
 
