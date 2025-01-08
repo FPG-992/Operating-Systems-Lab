@@ -1064,13 +1064,51 @@ root@utopia:~# hexdump -C -s 1024 -n 4 /dev/vdc
 
 ### Ερώτηση 6: Πόσο χώρο καταλαμβάνουν τα δεδομένα και τα μεταδεδομένα του συγκεκριμένου συστήματος αρχείων;
 #### Προσέγγιση: tools
-Χρησιμοποιούμε την εντολή `df` ([man page](https://linux.die.net/man/1/df): _displays the amount of disk space available on the file system containing each file name argument_)
+Θα χρησιμοποιήσουμε dumpe2fs για να δούμε το πόσα blocks είναι assigned και θα το πολλαπλασιάσουμε με το blocksize.
 ```bash
-root@utopia:~# df -h /mnt/fsdisk2
-Filesystem      Size  Used Avail Use% Mounted on
-/dev/vdc         20M  270K   20M   2% /mnt/fsdisk2
+root@utopia:~# dumpe2fs -h /dev/vdc
+dumpe2fs 1.47.0 (5-Feb-2023)
+Filesystem volume name:   fsdisk2.img
+Last mounted on:          /cslab-bunker
+Filesystem UUID:          d1266ad1-dae1-4275-8136-a29a4dfc9d1f
+Filesystem magic number:  0xEF53
+Filesystem revision #:    1 (dynamic)
+Filesystem features:      (none)
+Filesystem flags:         signed_directory_hash
+Default mount options:    user_xattr acl
+Filesystem state:         not clean
+Errors behavior:          Continue
+Filesystem OS type:       Linux
+Inode count:              5136
+Block count:              20480
+Reserved block count:     0
+Overhead clusters:        655
+Free blocks:              19555
+Free inodes:              0
+First block:              1
+Block size:               1024
+Fragment size:            1024
+Blocks per group:         8192
+Fragments per group:      8192
+Inodes per group:         1712
+Inode blocks per group:   214
+Filesystem created:       Tue Dec 12 15:23:17 2023
+Last mount time:          Wed Jan  8 18:19:24 2025
+Last write time:          Wed Jan  8 18:19:24 2025
+Mount count:              3
+Maximum mount count:      -1
+Last checked:             Tue Dec 12 15:23:17 2023
+Check interval:           0 (<none>)
+Lifetime writes:          919 kB
+Reserved blocks uid:      0 (user root)
+Reserved blocks gid:      0 (group root)
+First inode:              11
+Inode size:               128
+Default directory hash:   half_md4
+Directory Hash Seed:      e01a1438-a9b7-4218-b892-e0e1ae23d891
 ```
-Οπότε έχουμε 270 kilobytes
+
+Για τα data size: (blocks_count - free_blocks_count) * block_size = (20480 - 19555) * 1024 = 925 * 1024 = 947200 Bytes = 947.2 KB = 0.9033203125 MB
 
 #### Προσέγγιση: hexedit
 
@@ -1153,13 +1191,11 @@ s_inode_size = 128
 
 block_size = 1024bytes
 
+Για τα data size: (blocks_count - free_blocks_count) * block_size = (20480 - 19555) * 1024 = 925 * 1024 = 947200 Bytes = 947.2 KB = 0.9033203125 MB
+
+Υπάρχει ένα discrepancy μεταξύ της εντολής και του manual calculation με hexdump και αυτό συμβαίνει 
+
 ---
-
-Έχουμε πως τα metadata αποθηκεύονται στα inodes 
-Άρα έχουμε πως: (s_inodes_count = 5136 - s_free_inodes_count = 0) * (s_inode_size = 128) = 5136 * 128 = 657408 Bytes = 657.408 KB (in decimal)
-
-Επίσης για τα data: (blocks_count - free_blocks_count) * block_size = (20480 - 19555) * 1024 = 925 * 1024 = 947200 Bytes = 947.2 KB
-Total size = 657.408 + 942.7 = 1600.1KB = 1.52587891 mebibytes = 1.6 megabytes
 
 ### Ερώτηση 7: Πόσο είναι το μέγεθος του συγκεκριμένου συστήματος αρχείων;
 #### Προσέγγιση: tools
