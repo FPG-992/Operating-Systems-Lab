@@ -1486,3 +1486,30 @@ root@utopia:~#
 Βλέπουμε πως και το inode ref count από 1 έγινε 2 και δεν έχουμε error, και το **Inode 3425 ref count is 1, should be 2.** δεν παρουσιάζεται.
 
 ---
+
+Συνεχίζουμε στο **Block bitmap differences: +34**
+
+Το Block 34 θα έπρεπε να φαίνεται ως allocated 
+Πρέπει να κάνουμε το bit στο block map για το block 34 1 για να δείξουμε πως είναι free. 
+To Block 34 ανήκει στο Group 0 
+Κάθε byte στο block bitmap αντιπροσωπεύει 8 συνεχόμενα blocks 
+roundup(34/8) = 5 
+34 % 8 = το 2ο bit αντιπροσωπεύει το 34
+
+Το block bitmap ξεκινάει στο 3ο block (3*1024) = 0xC00. 0xC00 + 4 bytes = 0XC04 εκεί που ξεκινάει το 5ο block
+```bash
+FD
+```
+Το κάνουμε FF
+```bash
+FF
+```
+---
+
+Συνεχίζουμε στο **Free blocks count wrong for group #0 (7960, counted=7961).**
+
+---
+
+Τέλος μας έμεινε: **Free blocks count wrong (926431538, counted=19801).**
+
+
