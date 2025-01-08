@@ -1124,3 +1124,285 @@ root@utopia:~# hexdump -C -s 1024 -n 20 /dev/vdc
 00000410  00 00 00 00                                       |....|
 00000414
 ```
+
+---
+
+## Εικόνα fsdisk3.img
+Αρχικά βρίσκουμε σε πιο device αντιστοιχεί το fsdisk3.img:
+```bash
+root@utopia:/# hexdump -C -s 1024 -n 1024 /dev/vdd
+00000400  10 14 00 00 00 50 00 00  00 04 00 00 32 39 38 37  |.....P......2987|
+00000410  f9 13 00 00 01 00 00 00  00 00 00 00 00 00 00 00  |................|
+00000420  00 20 00 00 00 20 00 00  b0 06 00 00 e9 7a 78 65  |. ... .......zxe|
+00000430  ea 7a 78 65 01 00 ff ff  53 ef 01 00 01 00 00 00  |.zxe....S.......|
+00000440  e9 7a 78 65 00 00 00 00  00 00 00 00 01 00 00 00  |.zxe............|
+00000450  00 00 00 00 0b 00 00 00  80 00 00 00 00 00 00 00  |................|
+00000460  00 00 00 00 00 00 00 00  19 03 21 43 52 ce 49 17  |..........!CR.I.|
+00000470  8e c5 99 1c 89 ee 42 1b  66 73 64 69 73 6b 33 2e  |......B.fsdisk3.|
+00000480  69 6d 67 00 00 00 00 00  2f 63 73 6c 61 62 2d 62  |img...../cslab-b|
+00000490  75 6e 6b 65 72 00 00 00  00 00 00 00 00 00 00 00  |unker...........|
+000004a0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+*
+000004e0  00 00 00 00 00 00 00 00  00 00 00 00 b1 b5 d2 0e  |................|
+000004f0  a7 8a 4e 76 93 48 d3 97  0e b6 92 68 01 00 00 00  |..Nv.H.....h....|
+00000500  0c 00 00 00 00 00 00 00  e9 7a 78 65 00 00 00 00  |.........zxe....|
+00000510  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+*
+00000560  01 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+00000570  00 00 00 00 00 00 00 00  1d 00 00 00 00 00 00 00  |................|
+00000580  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+*
+00000800
+```
+Οπότε έχουμε την `/dev/vdd`.
+
+Eπιβεβαιώnoyme το περιεχόμενο της εικόνας:
+```bash
+root@utopia:/# sha256sum /home/user/shared/ext2-vdisks/fsdisk3-982902777.img
+982902777d0e66e14379f642365b4fa71a5473348d9af2453e80dbea135bb50d  /home/user/shared/ext2-vdisks/fsdisk3-982902777.img
+```
+```bash
+root@utopia:/# sha256sum /dev/vdd
+982902777d0e66e14379f642365b4fa71a5473348d9af2453e80dbea135bb50d  /dev/vdd
+```
+Το hash είναι το ίδιο, οπότε προχωράμε κανονικά στην άσκηση.
+
+### Ερώτηση 1: Ποιο εργαλείο στο Linux αναλαμβάνει τον έλεγχο ενός συστήματος αρχείων ext2 για αλλοιώσεις;
+Το εργαλείο που αναλαμβάνει τον έλεγχο ενός συστήματος αρχείων ext2 για αλλοιώσεις στο Linux είναι το e2fsck.
+Σύμφωνα με το [man-page](https://linux.die.net/man/8/e2fsck): _e2fsck is used to check the ext2/ext3/ext4 family of file systems_
+
+Το εργαλείο αυτό μπορεί να ανιχνεύσει και να διορθώσει διάφορες μορφές αλλοιώσεων, όπως aσυμφωνίες στον πίνακα inodes, kατεστραμμένα blocks, κα.
+
+---
+
+### Ερώτηση 2: Ποιοι παράγοντες θα μπορούσαν δυνητικά να οδηγήσουν σε αλλοιώσεις στο σύστημα αρχείων; Αναφέρετε ενδεικτικά δέκα πιθανές αλλοιώσεις.
+Οι αλλοιώσεις στο σύστημα αρχείων μπορούν να προκύψουν από διάφορους παράγοντες, οι οποίοι επηρεάζουν τη λειτουργία και την ακεραιότητα των δεδομένων. Μερικοί από αυτούς είναι:
+* Απροσδόκητη διακοπή ρεύματος
+* Ελαττωματικός δίσκος (Hardware Failure)
+* Λάθος στον Kernel ή στο Filesystem Driver
+* Ιοί και Κακόβουλο Λογισμικό
+* Φθαρμένα Blocks
+* Αποσύνδεση δίσκου κατά τη λειτουργεία χωρίς unmount
+
+
+### Ερώτηση 3: Τρέξτε το εργαλείο αυτό και επιδιορθώστε το σύστημα αρχείων. Αναφέρετε όλες τις αλλοιώσεις που εντοπίσατε, εξαντλητικά.
+Εφαρμόζοντας το εργαλείο έχουμε:
+```bash
+root@utopia:/# e2fsck -n /dev/vdd
+e2fsck 1.47.0 (5-Feb-2023)
+fsdisk3.img contains a file system with errors, check forced.
+Pass 1: Checking inodes, blocks, and sizes
+Pass 2: Checking directory structure
+First entry 'BOO' (inode=1717) in directory inode 1717 (/dir-2) should be '.'
+Fix? no
+
+Pass 3: Checking directory connectivity
+Pass 4: Checking reference counts
+Inode 3425 ref count is 1, should be 2.  Fix? no
+
+Pass 5: Checking group summary information
+Block bitmap differences:  +34
+Fix? no
+
+Free blocks count wrong for group #0 (7960, counted=7961).
+Fix? no
+
+Free blocks count wrong (926431538, counted=19801).
+Fix? no
+
+
+fsdisk3.img: ********** WARNING: Filesystem still has errors **********
+
+fsdisk3.img: 23/5136 files (0.0% non-contiguous), 18446744072783140558/20480 blocks
+```
+Οπότε παρατηρώ τα σφάλματα:
+1. First entry 'BOO' (inode=1717) in directory inode 1717 (/dir-2) should be '.'
+2. Inode 3425 ref count is 1, should be 2.
+3. Block bitmap differences: +34
+4. Free blocks count wrong for group #0 (7960, counted=7961).
+5. Free blocks count wrong (926431538, counted=19801).
+
+Για να επιδιορθώσει αυτόματα το εργαλείο τα παραπάνω προβλήματα τρέχουμε:
+```bash
+root@utopia:/# e2fsck -y /dev/vdd
+e2fsck 1.47.0 (5-Feb-2023)
+fsdisk3.img contains a file system with errors, check forced.
+Pass 1: Checking inodes, blocks, and sizes
+Pass 2: Checking directory structure
+First entry 'BOO' (inode=1717) in directory inode 1717 (/dir-2) should be '.'
+Fix? yes
+
+Pass 3: Checking directory connectivity
+Pass 4: Checking reference counts
+Inode 3425 ref count is 1, should be 2.  Fix? yes
+
+Pass 5: Checking group summary information
+Block bitmap differences:  +34
+Fix? yes
+
+Free blocks count wrong (926431538, counted=19800).
+Fix? yes
+
+
+fsdisk3.img: ***** FILE SYSTEM WAS MODIFIED *****
+fsdisk3.img: 23/5136 files (0.0% non-contiguous), 680/20480 blocks
+```
+
+Και επαληθεύοντας ότι τα προβλήματα, αυτά έχουν λυθεί:
+```bash
+root@utopia:/# e2fsck -n /dev/vdd
+e2fsck 1.47.0 (5-Feb-2023)
+fsdisk3.img: clean, 23/5136 files, 680/20480 blocks
+```
+
+---
+
+### Ερώτηση 4: Επαναφέρετε το δίσκο στην πρότερή του κατάσταση, από την αρχική εικόνα. Εντοπίστε τις αλλοιώσεις με χρήση της μεθόδου hexedit.
+Έχουμε αποθηκεύσει το backup στο `/home/user/shared/ext2-vdisks/fsdisk3-982902777-backup.img`, οπότε επαναφέρουμε το filesystem στην κατάσταση με τα λάθη:
+```bash
+root@utopia:/# cp /home/user/shared/ext2-vdisks/fsdisk3-982902777-backup.img /home/user/shared/ext2-vdisks/fsdisk3-982902777.img
+```
+
+Επιβεβαιώνουμε ότι το ανακτημένο αρχείο είναι ίδιο με το αρχικό:
+```bash
+root@utopia:/# sha256sum /home/user/shared/ext2-vdisks/fsdisk3-982902777.img
+982902777d0e66e14379f642365b4fa71a5473348d9af2453e80dbea135bb50d  /home/user/shared/ext2-vdisks/fsdisk3-982902777.img
+```
+```bash
+root@utopia:/# sha256sum /dev/vdd
+982902777d0e66e14379f642365b4fa71a5473348d9af2453e80dbea135bb50d  /dev/vdd
+```
+
+Θα βρούμε το: **First entry 'BOO' (inode=1717) in directory inode 1717 (/dir-2) should be '.'**
+
+Θα βρω πόσα inodes έχει κάθε block:
+```bash
+root@utopia:/# hexdump -C -s 1024 -n 44 /dev/vdd
+00000400  10 14 00 00 00 50 00 00  00 04 00 00 32 39 38 37  |.....P......2987|
+00000410  f9 13 00 00 01 00 00 00  00 00 00 00 00 00 00 00  |................|
+00000420  00 20 00 00 00 20 00 00  b0 06 00 00              |. ... ......|
+0000042c
+```
+Άρα `b0 06 00 00`, και σε δεκαδική μορφή: `1712`
+
+Το inode αυτό ανοίκει στο group ceil((1717 - 1) / 1712) = `1`, και στο offset (1717 - 1) mod 1712 = `4`.
+
+Οπότε θα βρούμε το inode table του group 1:
+```bash
+root@utopia:/# hexdump -C -s $((2048 + 1*32)) -n 12 /dev/vdd
+00000820  03 20 00 00 04 20 00 00  05 20 00 00              |. ... ... ..|
+0000082c
+```
+So `05 20 00 00`, `8197`
+
+Οπότε θα διαβάσουμε το 4ο inode (Direct Block Pointer 0):
+```bash
+root@utopia:/# hexdump -C -s $((8197*1024 + 4*128)) -n 44 /dev/vdd
+00801600  ed 41 00 00 00 04 00 00  e9 7a 78 65 e9 7a 78 65  |.A.......zxe.zxe|
+00801610  e9 7a 78 65 00 00 00 00  00 00 02 00 02 00 00 00  |.zxe............|
+00801620  00 00 00 00 04 00 00 00  dc 20 00 00              |......... ..|
+0080162c
+```
+So `dc 20 00 00 `, `8412`
+
+Οπότε βρήκαμε το block για το directory entry:
+```bash
+root@utopia:/# hexdump -C -s $((8412*1024)) -n 64 /dev/vdd
+00837000  b5 06 00 00 0c 00 03 00  42 4f 4f 00 02 00 00 00  |........BOO.....|
+00837010  0c 00 02 00 2e 2e 00 00  b6 06 00 00 10 00 06 00  |................|
+00837020  66 69 6c 65 2d 31 00 00  b7 06 00 00 10 00 06 00  |file-1..........|
+00837030  66 69 6c 65 2d 32 00 00  b8 06 00 00 c8 03 06 00  |file-2..........|
+00837040
+```
+Παρατηρώ ότι στην πρώτη θέση έχω το όνομα: `42 4f 4f`, το οποίο συμαίνει: `BOO`, και όχι το `.`.
+
+---
+
+Προχωράμε στο επόμενο: **Inode 3425 ref count is 1, should be 2.**
+
+Ομοίως με πριν θα εντοπίσουμε πόσα hard links έχει το inode 3425. Αρχικά ανοίκει στο 2 block με offset 0.
+
+Το inode table του block 2:
+```bash
+root@utopia:/# hexdump -C -s $((2048 + 2*32)) -n 12 /dev/vdd
+00000840  03 40 00 00 04 40 00 00  05 40 00 00              |.@...@...@..|
+0000084c
+```
+Άρα έχουμε το `05 40 00 00`, δηλαδή το: `16389`
+
+Για τα hard links του inode έχουμε:
+```bash
+root@utopia:/# hexdump -C -s $((16389*1024)) -n 28 /dev/vdd
+01001400  ed 41 00 00 00 04 00 00  e9 7a 78 65 e9 7a 78 65  |.A.......zxe.zxe|
+01001410  e9 7a 78 65 00 00 00 00  00 00 01 00              |.zxe........|
+0100141c
+```
+Άρα `01 00`, δηλαδή `1`.
+
+---
+
+Θα δούμε το: **Block bitmap differences: +34**
+
+Αρχικά χρειαζόμαστε τον αριθμό των blocks per group:
+```bash
+root@utopia:/# hexdump -C -s 1024 -n 36 /dev/vdd
+00000400  10 14 00 00 00 50 00 00  00 04 00 00 40 2e 00 00  |.....P......@...|
+00000410  f9 13 00 00 01 00 00 00  00 00 00 00 00 00 00 00  |................|
+00000420  00 20 00 00                                       |. ..|
+00000424
+```
+Είναι `00 20 00 00`, δηλαδή `8192`. Οπότε το block 34 βρίσκεται στο block #0.
+
+Θα πάρουμε το block bitmap από τον block discriptor για το group 0:
+```bash
+root@utopia:/# hexdump -C -s 2048 -n 4 /dev/vdd
+00000800  03 00 00 00                                       |....|
+00000804
+```
+Το οποίο είναι το `3`. Και διαβάζοντας το:
+```bash
+root@utopia:/# hexdump -C -s $((3*1024)) -n 64 /dev/vdd
+00000c00  ff ff ff ff fd ff ff ff  ff ff ff ff ff ff ff ff  |................|
+00000c10  ff ff ff ff ff ff ff ff  ff ff ff ff ff 00 00 00  |................|
+00000c20  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+*
+00000c40
+```
+Κάθε hex byte αποθηκεύει 8 bits, οπότε το #34 βρίσκεται στο byte 5 (34/8), το οποίο είναι το `fd` δηλαδή σε binary: `11111101`,
+βλέποντας ξεκάθαρα το πρόβλημα.
+
+---
+
+Θα δούμε το σφάλμα: **Free blocks count wrong for group #0 (7960, counted=7961)**
+
+Από τον block descriptor παίρνω τα ελεύθερα blocks του group 0:
+```bash
+root@utopia:/# hexdump -C -s 2048 -n 14 /dev/vdd
+00000800  03 00 00 00 04 00 00 00  05 00 00 00 18 1f        |..............|
+0000080e
+```
+Τα οποία είναι `18 1f`, ή `7960`
+
+To bitmap table για το block 0:
+```bash
+root@utopia:/# hexdump -C -s 2048 -n 4 /dev/vdd
+00000800  03 00 00 00                                       |....|
+00000804
+```
+Βρίσκεται στο block `03 00 00 00`, ή `3`.
+```bash
+root@utopia:/# hexdump -C -s $((3*1024)) -n 1024 /dev/vdd
+00000c00  ff ff ff ff fd ff ff ff  ff ff ff ff ff ff ff ff  |................|
+00000c10  ff ff ff ff ff ff ff ff  ff ff ff ff ff 00 00 00  |................|
+00000c20  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+*
+00001000
+```
+Έχουμε ότι `00001000` - `00000c20` in hex μας κάνουν `992` bytes.
+Οπότε έχουμε συνολικά `992*8 + 3*8 + 1` = `7961` ελεύθερα blocks.
+
+---
+
+Τέλος, **Free blocks count wrong (926431538, counted=19801)**
+
+???
