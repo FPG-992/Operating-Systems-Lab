@@ -1073,16 +1073,102 @@ Filesystem      Size  Used Avail Use% Mounted on
 Οπότε έχουμε 270 kilobytes
 
 #### Προσέγγιση: hexedit
-???
+
+Θέλουμε να βρούμε τα:
+s_inodes_count
+s_blocks_count	
+s_free_blocks_count
+s_free_inodes_count	
+s_log_block_size	
+s_inode_size
+
+```bash
+root@utopia:~# hexdump -C -s 1024 -n 1024 /dev/vdc
+00000400  10 14 00 00 00 50 00 00  00 00 00 00 63 4c 00 00  |.....P......cL..|
+00000410  00 00 00 00 01 00 00 00  00 00 00 00 00 00 00 00  |................|
+00000420  00 20 00 00 00 20 00 00  b0 06 00 00 b6 56 7d 67  |. ... .......V}g|
+00000430  d3 5c 7d 67 02 00 ff ff  53 ef 01 00 01 00 00 00  |.\}g....S.......|
+00000440  e5 7a 78 65 00 00 00 00  00 00 00 00 01 00 00 00  |.zxe............|
+00000450  00 00 00 00 0b 00 00 00  80 00 00 00 00 00 00 00  |................|
+00000460  00 00 00 00 00 00 00 00  d1 26 6a d1 da e1 42 75  |.........&j...Bu|
+00000470  81 36 a2 9a 4d fc 9d 1f  66 73 64 69 73 6b 32 2e  |.6..M...fsdisk2.|
+00000480  69 6d 67 00 00 00 00 00  2f 63 73 6c 61 62 2d 62  |img...../cslab-b|
+00000490  75 6e 6b 65 72 00 00 00  00 00 00 00 00 00 00 00  |unker...........|
+000004a0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+*
+000004e0  00 00 00 00 00 00 00 00  00 00 00 00 e0 1a 14 38  |...............8|
+000004f0  a9 b7 42 18 b8 92 e0 e1  ae 23 d8 91 01 00 00 00  |..B......#......|
+00000500  0c 00 00 00 00 00 00 00  e5 7a 78 65 00 00 00 00  |.........zxe....|
+00000510  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+*
+00000560  01 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+00000570  00 00 00 00 00 00 00 00  97 03 00 00 00 00 00 00  |................|
+00000580  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+*
+00000640  00 00 00 00 00 00 00 00  8f 02 00 00 00 00 00 00  |................|
+00000650  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+*
+00000800
+root@utopia:~#
+```
+
+```bash
+Offset (bytes)	Size (bytes)	Description
+0	4	s_inodes_count
+4	4	s_blocks_count
+8	4	s_r_blocks_count
+12	4	s_free_blocks_count
+16	4	s_free_inodes_count
+20	4	s_first_data_block
+24	4	s_log_block_size
+28	4	s_log_frag_size
+32	4	s_blocks_per_group
+36	4	s_frags_per_group
+40	4	s_inodes_per_group
+44	4	s_mtime
+48	4	s_wtime
+52	2	s_mnt_count
+54	2	s_max_mnt_count
+56	2	s_magic
+58	2	s_state
+60	2	s_errors
+62	2	s_minor_rev_level
+64	4	s_lastcheck
+68	4	s_checkinterval
+72	4	s_creator_os
+76	4	s_rev_level
+80	2	s_def_resuid
+82	2	s_def_resgid
+-- EXT2_DYNAMIC_REV Specific --
+84	4	s_first_ino
+88	2	s_inode_size
+```
+
+s_inodes_count = 5136
+s_blocks_count = 20480
+s_free_blocks_count = 19555
+s_free_inodes_count = 0	  
+s_log_block_size = 0
+s_inode_size = 128
+
+block_size = 1024bytes
 
 ---
+
+Έχουμε πως τα metadata αποθηκεύονται στα inodes 
+Άρα έχουμε πως: (s_inodes_count = 5136 - s_free_inodes_count = 0) * (s_inode_size = 128) = 5136 * 128 = 657408 Bytes = 657.408 KB (in decimal)
+
+Επίσης για τα data: (blocks_count - free_blocks_count) * block_size = (20480 - 19555) * 1024 = 925 * 1024 = 947200 Bytes = 947.2 KB
+Total size = 657.408 + 942.7 = 1600.1KB = 1.52587891 mebibytes = 1.6 megabytes
 
 ### Ερώτηση 7: Πόσο είναι το μέγεθος του συγκεκριμένου συστήματος αρχείων;
 #### Προσέγγιση: tools
 Από την `df` βλέπουμε ότι είναι 20 mega bytes.
 
 #### Προσέγγιση: hexedit
-???
+
+Block_Count * Block_size = 20480 * 1024 =
+20971520 Bytes = 20971.52 KB = 20.971519999999998 MB
 
 ---
 
