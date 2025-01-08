@@ -1437,8 +1437,52 @@ Offset (bytes)	Size (bytes)	Description
 
 ### Ερώτηση 5: Επιδιορθώστε κάθε αλλοίωση ξεχωριστά με χρήση της μεθόδου hexedit. Για κάθε μία από τις αλλοιώσεις που επιδιορθώνετε, τρέξτε το εργαλείο fsck με τρόπο που δεν προκαλεί καμία αλλαγή [“dry run”] και επιβεβαιώστε ότι πλέον δεν την εντοπίζει.
 Χρησιμοποιούμε hexedit γιατί το hexdump είναι ΜΟΝΟ για view.
-```bash
 
+Θα βρούμε το: **First entry 'BOO' (inode=1717) in directory inode 1717 (/dir-2) should be '.'**
+
+Θα πάμε στο 8412 * 1024 = 0x837000 που ξεκινάει το block που περιέχει το block 
+Θα αλλάξουμε το name_len από 3 σε 1 
+θα βάλουμε τον χαρακτήρα . που είναι το 2E στην θέση του B και θα μηδενίσουμε τα 2 O (BOO)
+
+Πριν:
+```bash
+B5 06 00 00  0C 00 03 00  42 4F 4F 00 
 ```
+
+Μετά
+```bash
+B5 06 00 00  0C 00 01 00  2E 00 00 00
+```
+
+---
+
+Προχωράμε στο επόμενο: **Inode 3425 ref count is 1, should be 2.**
+Θα πάμε στην διεύθυνση 0x1001400 + 26 bytes δηλαδή στο offset = 0x100141A  όπου είναι το index node του block 2 και θα αλλάξουμε το i_links_count από 01 00 σε 02 00
+
+```bash
+root@utopia:~# fsck.ext2 -n /dev/vdd
+e2fsck 1.47.0 (5-Feb-2023)
+fsdisk3.img contains a file system with errors, check forced.
+Pass 1: Checking inodes, blocks, and sizes
+Pass 2: Checking directory structure
+Pass 3: Checking directory connectivity
+Pass 4: Checking reference counts
+Pass 5: Checking group summary information
+Block bitmap differences:  +34
+Fix? no
+
+Free blocks count wrong for group #0 (7960, counted=7961).
+Fix? no
+
+Free blocks count wrong (926431538, counted=19801).
+Fix? no
+
+
+fsdisk3.img: ********** WARNING: Filesystem still has errors **********
+
+fsdisk3.img: 23/5136 files (0.0% non-contiguous), 18446744072783140558/20480 blocks
+root@utopia:~#
+```
+Βλέπουμε πως και το inode ref count από 1 έγινε 2 και δεν έχουμε error, και το **Inode 3425 ref count is 1, should be 2.** δεν παρουσιάζεται.
 
 ---
