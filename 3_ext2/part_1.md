@@ -1523,9 +1523,26 @@ fsdisk3.img: 23/5136 files (0.0% non-contiguous), 18446744072783140558/20480 blo
 ---
 
 Συνεχίζουμε στο **Free blocks count wrong for group #0 (7960, counted=7961).**
+Το οποίο φτιάχτηκε φτιάχνοτας το bitmap lock
 
 ---
 
-Τέλος μας έμεινε: **Free blocks count wrong (926431538, counted=19801).**
+Τέλος έμεινε το **Free blocks count wrong (926431538, counted=19800).**
 
+Το s_free_blocks_count είναι λάθος όποτε θα το αλλάξουμε. Ξεκινάει στο 12ο Byte (+1024) = 0x40C
 
+Βάζουμε την τιμή 19800 = 59 4D 00 00 (le) αντί για 926431538 (32 39 38 37) (le) που μας δείχνει εσφαλμένα.
+
+```bash
+32 39 38 37 before
+59 4D 00 00 after
+```
+
+Βλέπουμε πως το πρόβλημα λύθηκε και έχουμε:
+
+root@utopia:~# fsck.ext2 -n /dev/vdd
+e2fsck 1.47.0 (5-Feb-2023)
+fsdisk3.img: clean, 23/5136 files, 679/20480 blocks
+root@utopia:~#
+
+---
