@@ -1540,9 +1540,9 @@ fsdisk3.img: 23/5136 files (0.0% non-contiguous), 18446744072783140558/20480 blo
 
 Βλέπουμε πως το πρόβλημα λύθηκε και έχουμε:
 
+```bash
 root@utopia:~# fsck.ext2 -n /dev/vdd
 e2fsck 1.47.0 (5-Feb-2023)
 fsdisk3.img: clean, 23/5136 files, 679/20480 blocks
 root@utopia:~#
-
----
+```
