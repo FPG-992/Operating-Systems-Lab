@@ -1193,8 +1193,6 @@ block_size = 1024bytes
 
 Για τα data size: (blocks_count - free_blocks_count) * block_size = (20480 - 19555) * 1024 = 925 * 1024 = 947200 Bytes = 947.2 KB = 0.9033203125 MB
 
-Υπάρχει ένα discrepancy μεταξύ της εντολής και του manual calculation με hexdump και αυτό συμβαίνει 
-
 ---
 
 ### Ερώτηση 7: Πόσο είναι το μέγεθος του συγκεκριμένου συστήματος αρχείων;
