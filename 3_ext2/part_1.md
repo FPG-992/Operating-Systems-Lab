@@ -1504,6 +1504,22 @@ FD
 ```bash
 FF
 ```
+Βλέπουμε πως έφτιξε τρέχοντας fsck.ext2 -n /dev/vdd
+```bash
+root@utopia:~# fsck.ext2 -n /dev/vdd
+e2fsck 1.47.0 (5-Feb-2023)
+fsdisk3.img contains a file system with errors, check forced.
+Pass 1: Checking inodes, blocks, and sizes
+Pass 2: Checking directory structure
+Pass 3: Checking directory connectivity
+Pass 4: Checking reference counts
+Pass 5: Checking group summary information
+Free blocks count wrong (926431538, counted=19800).
+Fix? no
+
+fsdisk3.img: 23/5136 files (0.0% non-contiguous), 18446744072783140558/20480 blocks
+```
+
 ---
 
 Συνεχίζουμε στο **Free blocks count wrong for group #0 (7960, counted=7961).**
