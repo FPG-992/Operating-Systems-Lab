@@ -1,0 +1,1 @@
+savedcmd_/home/user/shared/ext2-lite/ext2-lite-helpcode/Module.symvers :=  scripts/mod/modpost -M        -o /home/user/shared/ext2-lite/ext2-lite-helpcode/Module.symvers -T /home/user/shared/ext2-lite/ext2-lite-helpcode/modules.order -i Module.symvers -e 
