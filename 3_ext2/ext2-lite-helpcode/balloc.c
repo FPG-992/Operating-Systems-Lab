@@ -260,9 +260,9 @@ void ext2_free_blocks(struct inode *inode, unsigned long block, unsigned long co
 	bit = (block - fdb) % EXT2_BLOCKS_PER_GROUP(sb);
 	ext2_debug("freeing block(s) %lu-%lu from bg %lu\n", block, block + count - 1, block_group);
 
-	bitmap_bh = ext2_read_block_bitmap(sb, block_group);
+	bitmap_bh = ext2_read_block_bitmap(sb, block_group); //we get the bitmap block head and save it in bitmap_bh
 	if (!bitmap_bh) {
-		brelse(bitmap_bh);
+		brelse(bitmap_bh); //buffer release
 		return;
 	}
 
@@ -272,7 +272,7 @@ void ext2_free_blocks(struct inode *inode, unsigned long block, unsigned long co
 		return;
 	}
 
-	if (!ext2_data_blocks_valid_bg(desc, sbi, block, count)) {
+	if (!ext2_data_blocks_valid_bg(desc, sbi, block, count)) { //check if the blocks are valid by calling ext2_data_blocks_valid_bg
 		ext2_error(sb, __func__, "Freeing blocks in system zones - Block = %lu, count = %lu",
 		           block, count);
 		brelse(bitmap_bh);
@@ -283,20 +283,20 @@ void ext2_free_blocks(struct inode *inode, unsigned long block, unsigned long co
 		if (!ext2_clear_bit_atomic(sb_bgl_lock(sbi, block_group), bit + i, bitmap_bh->b_data))
 			ext2_error(sb, __func__, "bit already cleared for block %lu", block + i);
 		else
-			freed++;
+			freed++; //increment the freed counter that shows us how many blocks we have freed
 	}
 
 	mark_buffer_dirty(bitmap_bh);
-	if (sb->s_flags & SB_SYNCHRONOUS)
-		sync_dirty_buffer(bitmap_bh);
+	if (sb->s_flags & SB_SYNCHRONOUS) //if the flag is set, we sync the dirty buffer in order to write the changes to the disk
+		sync_dirty_buffer(bitmap_bh); //sync the dirty buffer
 
-	group_update_free_blocks(sb, block_group, desc, bh2, freed);
+	group_update_free_blocks(sb, block_group, desc, bh2, freed); //update the free blocks count in the block group
 
-	brelse(bitmap_bh);
+	brelse(bitmap_bh); //buffer release
 	if (freed) {
 		percpu_counter_add(&sbi->s_freeblocks_counter, freed);
-		inode->i_blocks -= (freed * sb->s_blocksize) / 512;
-		mark_inode_dirty(inode);
+		inode->i_blocks -= (freed * sb->s_blocksize) / 1024; //1024 is the blocksize
+		mark_inode_dirty(inode); //mark the inode as dirty
 	}
 	ext2_debug("freed: %u\n", freed);
 }
