@@ -644,3 +644,132 @@ void lunix_chrdev_destroy(void)
   Η χρήση των wait_event_interruptible() και του down_interruptible() εξασφαλίζει ότι οι διεργασίες δεν καταναλώνουν CPU όταν δεν υπάρχουν διαθέσιμα δεδομένα.
 
 ---
+
+## 1. Solving Exercises on Linux Device Drivers
+
+When approaching exercises on Linux device drivers (whether for character, block, network drivers, or even filesystem modules), consider the following steps:
+
+### 1.1 Understand the Requirements
+- **Read the problem statement carefully:**  
+  Identify what the driver is supposed to do (e.g., interact with hardware, provide a userspace interface through special files, manage interrupts, etc.).
+- **Identify key components:**  
+  Look for clues such as the use of interrupts, memory-mapped I/O, circular buffers, etc.
+- **Review the provided data structures:**  
+  For example, you might see a structure that represents a device (with buffers, counters, locks, and wait queues) or per‑open state information. Understand what each field represents.
+
+### 1.2 Map the Driver Model
+- **File Operations:**  
+  Understand which file operations your driver must implement (open, read, write, ioctl, mmap, release, etc.). For instance, if the driver is a character device, it will likely define a `struct file_operations` with these pointers.
+- **Initialization and Cleanup:**  
+  Learn how the driver registers itself with the kernel. This is usually done with functions like `register_chrdev_region()`, `cdev_init()`, and `cdev_add()` in the case of character drivers.
+- **Interrupt Handling:**  
+  Know how the driver handles interrupts (for instance, reading data from hardware in an interrupt service routine (ISR) and then waking up processes that are waiting on a wait queue).
+
+### 1.3 Writing the Code
+- **Start with a Stub:**  
+  Often, exercises provide a skeleton (stub) with placeholders (comments like `/* ? */`). Identify each placeholder and what it should do.
+- **Break Down the Problem:**  
+  Divide the exercise into manageable pieces (e.g., implement open() first, then read(), then the interrupt handler).
+- **Implement Error Checking:**  
+  Always check for error returns (e.g., if memory allocation fails or if a hardware read returns an error).
+- **Follow the Kernel Conventions:**  
+  Use provided helper functions (such as `copy_to_user()`, `kmalloc()`, `spin_lock()`, etc.) and follow the style guidelines of the Linux kernel.
+- **Test Your Driver:**  
+  Use tools like `dmesg`, `printk()`, and userspace test programs to verify that your driver behaves as expected.
+
+### 1.4 Debugging and Verification
+- **Use printk() for Debugging:**  
+  Sprinkle `printk()` statements at strategic points in your code (e.g., when a measurement is read or an interrupt is handled) to track execution flow.
+- **Examine /proc and /sys Files:**  
+  Use `/proc/devices` to check if your driver is registered, and use tools like `cat` and `echo` on your device node to see if it functions correctly.
+- **Test Edge Cases:**  
+  Verify how your driver behaves when no data is available, or when more data than expected is received, etc.
+
+---
+
+## 2. Detailed Explanation of Locks in Linux Kernel Drivers
+
+Synchronization is a critical aspect of kernel driver programming because multiple contexts (process context, interrupt context) can access shared data concurrently. Here’s an in-depth look at the most common locking mechanisms:
+
+### 2.1 Spinlocks
+
+**What They Are:**  
+- Spinlocks are a type of lock used in situations where the code cannot sleep (e.g., in interrupt context).  
+- When a thread tries to acquire a spinlock that is already held, it “spins” in a tight loop (busy-waiting) until the lock becomes available.
+
+**How They Work:**  
+- **spin_lock(&lock):** Acquires the spinlock. If the lock is already held, the caller busy-waits.
+- **spin_unlock(&lock):** Releases the spinlock.
+- **spin_lock_irq(&lock) / spin_unlock_irq(&lock):** These variants disable local interrupts while the lock is held, which is crucial when the protected data is also accessed by interrupt handlers.
+- **Usage Considerations:**  
+  - **Short critical sections:** Spinlocks are efficient when the lock is held for very short periods.
+  - **Interrupt Context:** They are safe to use in interrupt handlers because sleeping is not allowed there.
+  - **No Sleep:** They do not allow the thread to sleep; hence, they can waste CPU cycles if held too long.
+
+**Example Command Usage:**
+```c
+spinlock_t my_lock;
+
+spin_lock_init(&my_lock);
+
+spin_lock(&my_lock);
+// Critical section: access shared data
+spin_unlock(&my_lock);
+
+// In interrupt context:
+spin_lock_irq(&my_lock);
+// Critical section in ISR
+spin_unlock_irq(&my_lock);
+```
+
+### 2.2 Semaphores and Mutexes
+
+**What They Are:**  
+- Semaphores and mutexes are sleepable locks that allow a process to sleep if the lock is not available, saving CPU cycles.
+- A binary semaphore (or mutex) is used when only one thread should access a resource at a time.
+
+**How They Work:**  
+- **down() / down_interruptible():** Attempts to acquire the semaphore.  
+  - `down()` will sleep until the semaphore becomes available.  
+  - `down_interruptible()` can be interrupted by signals.
+- **up():** Releases the semaphore, waking up any waiting processes.
+
+**Usage Considerations:**  
+- **Process Context:** Suitable in process context where sleeping is allowed.
+- **Longer Critical Sections:** Good for protecting data when operations might take longer.
+- **Not for Interrupt Context:** Cannot be used in interrupt handlers because sleeping is not allowed in that context.
+
+**Example Command Usage:**
+```c
+struct semaphore my_sem;
+
+sema_init(&my_sem, 1);  // Initialize binary semaphore
+
+if (down_interruptible(&my_sem))
+    return -ERESTARTSYS;
+// Critical section: safely access shared data
+up(&my_sem);  // Release the semaphore
+```
+
+### 2.3 When to Use Which Lock
+
+- **Spinlocks:**  
+  Use spinlocks when you are in an environment where sleeping is not allowed (e.g., interrupt handlers, bottom halves) and the critical section is short.
+  
+- **Semaphores/Mutexes:**  
+  Use these in process context when the critical section might take longer or when you wish to allow the thread to sleep while waiting for the lock. For per‑open state (like in the `chrdev_state`), a binary semaphore or mutex is appropriate because blocking is acceptable.
+
+### 2.4 Practical Considerations in Driver Exercises
+
+When solving driver exercises:
+- **Identify Shared Data:**  
+  Look for shared variables (like the circular buffer or the counter in our patient-monitoring driver) that may be accessed by both the interrupt handler and user-level operations.  
+- **Choose the Appropriate Lock:**  
+  Use spinlocks for data accessed in interrupt context (as in `medical_dev->lock`) and semaphores/mutexes for per‑open state data (as in `chrdev_state->lock`).
+- **Minimize Critical Section Length:**  
+  Always keep the locked section as short as possible—especially with spinlocks—to avoid performance issues.
+- **Lock Nesting and Order:**  
+  Be cautious with lock ordering; for instance, in the read() operation we acquire the global spinlock before then acquiring the per‑open semaphore. Always release in the reverse order of acquisition.
+
+---
+
