@@ -1,5 +1,3 @@
----
-
 # 1. Εισαγωγή στη Linux Device Driver Programming
 
 ### 1.1 Βασικές Έννοιες
