@@ -260,6 +260,120 @@ static int ext2_allocate_in_bg(struct super_block *sb, int group,
 }
 ```
 
+```c
+struct inode *ext2_iget(struct super_block *sb, unsigned long ino)
+{
+	struct ext2_inode_info *ei;
+	struct buffer_head *bh = NULL;
+	struct ext2_inode *raw_inode;
+	struct inode *inode;
+	long ret = -EIO;
+	int n;
+
+	ext2_debug("request to get ino: %lu\n", ino);
+
+	/*
+	 * Allocate the VFS node.
+	 * We know that the returned inode is part of a bigger ext2_inode_info
+	 * inode since iget_locked() calls our ext2_sops->alloc_inode() function
+	 * to perform the allocation of the inode.
+	 */
+	inode = iget_locked(sb, ino);
+	if (!inode)
+		return ERR_PTR(-ENOMEM);
+	if (!(inode->i_state & I_NEW))
+		return inode;
+
+	/*
+	 * Read the EXT2 inode *from disk*
+	 */
+	raw_inode = ext2_get_inode(inode->i_sb, ino, &bh);
+	if (IS_ERR(raw_inode)) {
+		ret = PTR_ERR(raw_inode);
+		brelse(bh);
+		iget_failed(inode);
+		return ERR_PTR(ret);
+	}
+
+	/*
+	 * Fill the necessary fields of the VFS inode structure.
+	 */
+	inode->i_mode = le16_to_cpu(raw_inode->i_mode);
+	i_uid_write(inode, (uid_t)le16_to_cpu(raw_inode->i_uid));
+	i_gid_write(inode, (gid_t)le16_to_cpu(raw_inode->i_gid));
+	set_nlink(inode, le16_to_cpu(raw_inode->i_links_count));
+	inode_set_atime(inode, (signed)le32_to_cpu(raw_inode->i_atime), 0);
+	inode_set_ctime(inode, (signed)le32_to_cpu(raw_inode->i_ctime), 0);
+	inode_set_mtime(inode, (signed)le32_to_cpu(raw_inode->i_mtime), 0);
+	// ei->i_dtime = le32_to_cpu(raw_inode->i_dtime); we comment this out because it is set later
+	inode->i_blocks = le32_to_cpu(raw_inode->i_blocks);
+	inode->i_size = le32_to_cpu(raw_inode->i_size);
+	if (i_size_read(inode) < 0) {
+		ret = -EUCLEAN;
+		brelse(bh);
+		iget_failed(inode);
+		return ERR_PTR(ret);
+	}
+	//> Setup the {inode,file}_operations structures depending on the type.
+	if (S_ISREG(inode->i_mode)) {
+		/* ? */
+		//S_ISREG means it is a regular file
+		//we assign the inode operations structure to the inode_operations structure for a regular file
+		inode->i_op = &ext2_file_inode_operations;
+		//assign file operations structure for a regular file
+		inode->i_fop = &ext2_file_operations; 
+		//assign address space operations structure for a regular file
+		inode->i_mapping->a_ops = &ext2_aops; // **Add this line**
+
+	} else if (S_ISDIR(inode->i_mode)) {
+		/* ? */
+		//S_ISDIR means it is a directory
+		//we assign the inode operations structure to the inode_operations structure for a directory
+		inode->i_op = &ext2_dir_inode_operations;
+		//assign file operations structure for a directory
+		inode->i_fop = &ext2_dir_operations;
+		inode->i_mapping->a_ops = &ext2_aops;
+	} else if (S_ISLNK(inode->i_mode)) {
+		if (ext2_inode_is_fast_symlink(inode)) {
+			inode->i_op = &simple_symlink_inode_operations;
+			inode->i_link = (char *)ei->i_data;
+			nd_terminate_link(ei->i_data, inode->i_size, sizeof(ei->i_data) - 1);
+		} else {
+			inode->i_op = &page_symlink_inode_operations;
+			inode_nohighmem(inode);
+			inode->i_mapping->a_ops = &ext2_aops;
+		}
+	} else {
+		inode->i_op = &ext2_special_inode_operations;
+		if (raw_inode->i_block[0])
+			init_special_inode(inode, inode->i_mode,
+			   old_decode_dev(le32_to_cpu(raw_inode->i_block[0])));
+		else 
+			init_special_inode(inode, inode->i_mode,
+			   new_decode_dev(le32_to_cpu(raw_inode->i_block[1])));
+	}
+
+	/*
+	 * Fill the necessary fields of the ext2_inode_info structure.
+	 */
+	ei = EXT2_I(inode);
+	ei->i_dtime = le32_to_cpu(raw_inode->i_dtime);
+	ei->i_flags = le32_to_cpu(raw_inode->i_flags);
+	ext2_set_inode_flags(inode);
+	ei->i_dtime = 0;
+	ei->i_state = 0;
+	ei->i_block_group = (ino - 1) / EXT2_INODES_PER_GROUP(inode->i_sb);
+	//> NOTE! The in-memory inode i_data array is in little-endian order
+	//> even on big-endian machines: we do NOT byteswap the block numbers!
+	for (n = 0; n < EXT2_N_BLOCKS; n++)
+		ei->i_data[n] = raw_inode->i_block[n];
+
+	brelse(bh);
+	unlock_new_inode(inode);
+	return inode;
+}
+```
+
 **Explanation:**
 
 - **Bitmap Search:**  
